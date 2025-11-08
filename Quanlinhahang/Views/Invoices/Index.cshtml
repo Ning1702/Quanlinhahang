@@ -57,26 +57,44 @@
                 </td>
 
                 <td class="text-center">
+                    @* 3 trạng thái thao tác *@
                     @if (x.TrangThaiThanhToan == "Đã thanh toán")
                     {
-                        <a asp-action="Edit" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-info">
+                        @* 3. ĐÃ THANH TOÁN: Xem + In *@
+                        <a asp-action="Details" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-info me-1">
                             <i class="bi bi-eye"></i> Xem
+                        </a>
+                        <a asp-action="Print" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-secondary">
+                            <i class="bi bi-printer"></i> In
+                        </a>
+                    }
+                    else if (x.TrangThaiXacNhan == "Đã xác nhận")
+                    {
+                        @* 2. ĐÃ XÁC NHẬN: Xem + Sửa + In *@
+                        <a asp-action="Details" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-info me-1">
+                            <i class="bi bi-eye"></i> Xem
+                        </a>
+                        <a asp-action="Edit" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-warning me-1">
+                            <i class="bi bi-pencil-square"></i> Sửa
+                        </a>
+                        <a asp-action="Print" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-secondary">
+                            <i class="bi bi-printer"></i> In
                         </a>
                     }
                     else
                     {
-                        <a asp-action="Edit" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-warning">
-                            <i class="bi bi-pencil-square"></i> Sửa
-                        </a>
-                    }
-
-                    @if (x.TrangThaiXacNhan == "Chờ xác nhận")
-                    {
+                        @* 1. CHỜ XÁC NHẬN: Xác nhận + Sửa + In *@
                         <form asp-action="ConfirmInvoice" asp-route-id="@x.HoaDonID" method="post" style="display:inline;">
-                            <button type="submit" class="btn btn-sm btn-success">
+                            <button type="submit" class="btn btn-sm btn-success me-1">
                                 <i class="bi bi-check-circle"></i> Xác nhận
                             </button>
                         </form>
+                        <a asp-action="Edit" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-warning me-1">
+                            <i class="bi bi-pencil-square"></i> Sửa
+                        </a>
+                        <a asp-action="Print" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-secondary">
+                            <i class="bi bi-printer"></i> In
+                        </a>
                     }
                 </td>
             </tr>
