@@ -2,9 +2,11 @@
 @{
     var monAn = (List<Quanlinhahang.Models.MonAn>)ViewBag.MonAn;
     ViewData["Title"] = $"Sửa hóa đơn #{Model.HoaDonID}";
-    bool daXacNhan = (ViewBag.TrangThaiXacNhan == "Đã xác nhận");
+
+    // ===== ĐÃ SỬA LOGIC BIẾN =====
     bool daThanhToan = (bool)(ViewBag.DaThanhToan ?? false);
-    bool khongTheSua = daXacNhan && daThanhToan;
+    bool daXacNhan = (ViewBag.TrangThai == "Đã xác nhận");
+    bool khongTheSua = daThanhToan; // Logic đúng: Chỉ khóa khi đã thanh toán
 }
 
 <h2 class="mt-3">Hóa đơn #@Model.HoaDonID</h2>
@@ -114,11 +116,8 @@ else if (daXacNhan)
             </tbody>
 
             @{
-                // Tính toán tổng tiền dựa trên các món trong Model
                 var subTotal = Model.Items.Sum(i => i.ThanhTien);
                 var vat = subTotal * 0.1m; // 10% VAT
-
-                // Tổng tiền cuối cùng (bao gồm giảm giá/điểm)
                 var finalTotal = (subTotal + vat) - Model.GiamGia - Model.DiemSuDung;
                 if (finalTotal < 0) { finalTotal = 0; }
             }
@@ -194,8 +193,8 @@ else if (daXacNhan)
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="HoaDonID" />
             <input type="hidden" asp-for="DatBanID" />
-            @* giữ nguyên trạng thái thanh toán, không cho sửa *@
-            <input type="hidden" asp-for="TrangThaiThanhToan" />
+
+            <input type="hidden" asp-for="TrangThai" />
 
             <fieldset @(khongTheSua ? "disabled" : "")>
                 <div class="mb-2">
@@ -215,16 +214,11 @@ else if (daXacNhan)
                         <option>QR</option>
                     </select>
                 </div>
-
-                @* BỎ Ô TRẠNG THÁI — không hiển thị dropdown nữa *@
-                @* (đã có input hidden TrangThaiThanhToan phía trên để giữ giá trị) *@
             </fieldset>
 
             <button class="btn btn-success" @(khongTheSua ? "disabled" : "")>Lưu</button>
             <a class="btn btn-secondary" href="@Url.Action("Index")">Quay lại</a>
 
-            @* BỎ NÚT In / Xuất PDF *@
-            @* <a class="btn btn-outline-dark" target="_blank" href="@Url.Action("Print", new { id = Model.HoaDonID })">In / Xuất PDF</a> *@
         </form>
     </div>
 </div>

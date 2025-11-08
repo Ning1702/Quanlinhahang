@@ -6,8 +6,10 @@ namespace Quanlinhahang.Models.ViewModels
     public class InvoiceFilterVM
     {
         public string? Search { get; set; }
-        public string? TrangThaiThanhToan { get; set; } // "Chưa thanh toán" / "Đã thanh toán" / null
-        public string? TrangThaiXacNhan { get; set; }   // ✅ Thêm mới
+
+        // ===== ĐÃ XÓA 2 DÒNG TRẠNG THÁI CŨ =====
+        // public string? TrangThaiThanhToan { get; set; } 
+        // public string? TrangThaiXacNhan { get; set; }
 
         [DataType(DataType.Date)]
         public DateTime? From { get; set; }
@@ -25,8 +27,12 @@ namespace Quanlinhahang.Models.ViewModels
         public string? SoDienThoai { get; set; }
         public decimal TongTien { get; set; }
 
-        public string TrangThaiThanhToan { get; set; } = "";
-        public string TrangThaiXacNhan { get; set; } = "";  // ✅ Thêm mới
+        // ===== ĐÃ SỬA =====
+        public string TrangThai { get; set; } = "";
+
+        // ===== ĐÃ XÓA 2 DÒNG TRẠNG THÁI CŨ =====
+        // public string TrangThaiThanhToan { get; set; } = "";
+        // public string TrangThaiXacNhan { get; set; } = "";
     }
 
     // ✏️ ViewModel chỉnh sửa / tạo hóa đơn
@@ -34,22 +40,35 @@ namespace Quanlinhahang.Models.ViewModels
     {
         public int HoaDonID { get; set; }
         public int DatBanID { get; set; }
+
+        [Display(Name = "Giảm giá")]
         public decimal GiamGia { get; set; }
+
+        [Display(Name = "Điểm sử dụng")]
         public int DiemSuDung { get; set; }
+
+        [Display(Name = "Hình thức thanh toán")]
         public string? HinhThucThanhToan { get; set; }
 
-        public string TrangThaiThanhToan { get; set; } = "Chưa thanh toán";
-        public string TrangThaiXacNhan { get; set; } = "Chưa xác nhận";  // ✅ Thêm mới
+        // ===== ĐÃ SỬA (Giữ nguyên) =====
+        public string TrangThai { get; set; } = "";
 
-        public List<ItemLine> Items { get; set; } = new();
+        // ===== ĐÃ XÓA (Giữ nguyên) =====
+        // public string? TrangThaiThanhToan { get; set; }
+        // public string? TrangThaiXacNhan { get; set; } 
 
-        // 📦 Chi tiết từng món ăn trong hóa đơn
+
+        public List<ItemLine> Items { get; set; } = new List<ItemLine>();
+
+        // Lớp con ItemLine giữ nguyên
         public class ItemLine
         {
             public int MonAnID { get; set; }
             public string TenMon { get; set; } = "";
             public int SoLuong { get; set; }
             public decimal DonGia { get; set; }
+
+            // Thêm thuộc tính tính toán này để Edit.cshtml dễ sử dụng
             public decimal ThanhTien => SoLuong * DonGia;
         }
     }

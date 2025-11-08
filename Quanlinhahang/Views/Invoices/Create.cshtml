@@ -14,7 +14,7 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="DatBanID" class="control-label"></label>
-                <select asp-for="DatBanID" class ="form-control" asp-items="ViewBag.DatBanID"></select>
+                <select asp-for="DatBanID" class="form-control" asp-items="ViewBag.DatBanID"></select>
             </div>
             <div class="form-group">
                 <label asp-for="TaiKhoanID" class="control-label"></label>
@@ -51,10 +51,11 @@
                 <input asp-for="HinhThucThanhToan" class="form-control" />
                 <span asp-validation-for="HinhThucThanhToan" class="text-danger"></span>
             </div>
+
             <div class="form-group">
-                <label asp-for="TrangThaiThanhToan" class="control-label"></label>
-                <input asp-for="TrangThaiThanhToan" class="form-control" />
-                <span asp-validation-for="TrangThaiThanhToan" class="text-danger"></span>
+                <label asp-for="TrangThai" class="control-label"></label>
+                <input asp-for="TrangThai" class="form-control" />
+                <span asp-validation-for="TrangThai" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
@@ -68,5 +69,7 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

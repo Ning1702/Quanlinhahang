@@ -14,8 +14,7 @@ namespace Quanlinhahang.Models
         public int DiemCong { get; set; }
         public int DiemSuDung { get; set; }
         public string? HinhThucThanhToan { get; set; } // Tiền mặt / Thẻ / QR...
-        public string TrangThaiXacNhan { get; set; } = "Chưa xác nhận";
-        public string TrangThaiThanhToan { get; set; } = "Chưa thanh toán";
+        public string TrangThai { get; set; } = "Chưa xác nhận";
 
         public DatBan? DatBan { get; set; }
         public List<ChiTietHoaDon> ChiTiet { get; set; } = new();

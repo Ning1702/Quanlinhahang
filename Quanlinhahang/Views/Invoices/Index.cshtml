@@ -86,19 +86,19 @@
                 <td class="text-end">@x.TongTien.ToString("#,##0")</td>
 
                 <td>
-                    @if (x.TrangThaiThanhToan == "Đã thanh toán")
+                    @if (x.TrangThai == "Đã thanh toán")
                     {
                         <span class="badge bg-success">Đã thanh toán</span>
                     }
-                    else if (x.TrangThaiXacNhan == "Đang phục vụ")
+                    else if (x.TrangThai == "Đang phục vụ")
                     {
                         <span class="badge bg-info">Đang phục vụ</span>
                     }
-                    else if (x.TrangThaiXacNhan == "Đã xác nhận")
+                    else if (x.TrangThai == "Đã xác nhận")
                     {
                         <span class="badge bg-primary">Đã xác nhận</span>
                     }
-                    else if (x.TrangThaiXacNhan == "Đã hủy")
+                    else if (x.TrangThai == "Đã hủy")
                     {
                         <span class="badge bg-secondary">Đã hủy</span>
                     }
@@ -114,19 +114,19 @@
                     {
                         // Tab "Tất cả"
                         string targetStatus = "ChoXacNhan";
-                        if (x.TrangThaiThanhToan == "Đã thanh toán")
+                        if (x.TrangThai == "Đã thanh toán")
                         {
                             targetStatus = "DaThanhToan";
                         }
-                        else if (x.TrangThaiXacNhan == "Đã hủy")
+                        else if (x.TrangThai == "Đã hủy")
                         {
                             targetStatus = "DaHuy";
                         }
-                        else if (x.TrangThaiXacNhan == "Đang phục vụ")
+                        else if (x.TrangThai == "Đang phục vụ")
                         {
                             targetStatus = "DangPhucVu";
                         }
-                        else if (x.TrangThaiXacNhan == "Đã xác nhận")
+                        else if (x.TrangThai == "Đã xác nhận")
                         {
                             targetStatus = "DaXacNhan";
                         }
@@ -143,7 +143,7 @@
                         // Các tab khác
 
                         @* 1. ĐÃ THANH TOÁN: Xem + In *@
-                        @if (x.TrangThaiThanhToan == "Đã thanh toán")
+                        @if (x.TrangThai == "Đã thanh toán")
                         {
                             <a asp-controller="Invoices" asp-action="Details"
                                asp-route-id="@x.HoaDonID"
@@ -158,7 +158,7 @@
                         }
 
                         @* 2. ĐÃ XÁC NHẬN: Phục vụ + Chi tiết (Edit) + Hủy *@
-                        else if (x.TrangThaiXacNhan == "Đã xác nhận")
+                        else if (x.TrangThai == "Đã xác nhận")
                         {
                             <form asp-controller="Invoices"
                                   asp-action="StartServing"
@@ -193,14 +193,21 @@
                             </form>
                         }
 
-                        @* 3. ĐANG PHỤC VỤ: Xem + Chi tiết (Edit) + Hủy *@
-                        else if (x.TrangThaiXacNhan == "Đang phục vụ")
+                        @* 3. ĐANG PHỤC VỤ: Thanh toán (Action) + Chi tiết (Edit) + Hủy *@
+                        else if (x.TrangThai == "Đang phục vụ")
                         {
-                            <a asp-controller="Invoices" asp-action="Details"
-                               asp-route-id="@x.HoaDonID"
-                               class="btn btn-sm btn-info me-1">
-                                <i class="bi bi-eye"></i> Xem
-                            </a>
+                            <form asp-controller="Invoices"
+                                  asp-action="ThanhToan"
+                                  asp-route-id="@x.HoaDonID"
+                                  method="post"
+                                  style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="currentStatus" value="@currentStatus" />
+                                <button type="submit" class="btn btn-sm btn-success me-1"
+                                        onclick="return confirm('Xác nhận thanh toán cho hóa đơn này?');">
+                                    <i class="bi bi-credit-card"></i> Thanh toán
+                                </button>
+                            </form>
 
                             <a asp-controller="Invoices" asp-action="Edit"
                                asp-route-id="@x.HoaDonID"
@@ -224,7 +231,7 @@
                         }
 
                         @* 4. ĐÃ HỦY: Chỉ cho Xem *@
-                        else if (x.TrangThaiXacNhan == "Đã hủy")
+                        else if (x.TrangThai == "Đã hủy")
                         {
                             <a asp-controller="Invoices" asp-action="Details"
                                asp-route-id="@x.HoaDonID"
@@ -233,7 +240,7 @@
                             </a>
                         }
 
-                        @* 5. CHỜ XÁC NHẬN / CHƯA XÁC NHẬN: Chi tiết (Edit) + Xác nhận *@
+                        @* 5. CHỜ XÁC NHẬN: Chi tiết (Edit) + Xác nhận + Hủy *@
                         else
                         {
                             <a asp-controller="Invoices" asp-action="Edit"
@@ -249,8 +256,22 @@
                                   style="display:inline;">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="currentStatus" value="@currentStatus" />
-                                <button type="submit" class="btn btn-sm btn-success">
+                                <button type="submit" class="btn btn-sm btn-success me-1">
                                     <i class="bi bi-check-circle"></i> Xác nhận
+                                </button>
+                            </form>
+
+                            <form asp-controller="Invoices"
+                                  asp-action="HuyHoaDon"
+                                  asp-route-id="@x.HoaDonID"
+                                  method="post"
+                                  style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="currentStatus" value="@currentStatus" />
+                                <button type="submit"
+                                        class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Bạn có chắc chắn muốn hủy hóa đơn này?');">
+                                    <i class="bi bi-x-circle"></i> Hủy
                                 </button>
                             </form>
                         }
