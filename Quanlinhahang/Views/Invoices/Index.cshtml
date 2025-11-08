@@ -1,48 +1,23 @@
-﻿@model List<Quanlinhahang.Models.ViewModels.InvoiceRowVM>
-@{
-    var f = (Quanlinhahang.Models.ViewModels.InvoiceFilterVM)ViewBag.Filter;
-    ViewData["Title"] = "Quản lý hóa đơn (Nhân viên)";
-}
-<h2 class="mt-3">Quản lý hóa đơn</h2>
+﻿@model IEnumerable<Quanlinhahang.Models.ViewModels.InvoiceRowVM>
 
-<form method="get" class="row g-2 mb-3">
-    <div class="col-md-3">
-        <input class="form-control" name="Search" value="@f?.Search" placeholder="Tìm tên KH / SĐT" />
-    </div>
-    <div class="col-md-2">
-        <select class="form-select" name="TrangThaiThanhToan">
-            <option value="">-- Trạng thái TT --</option>
-            <option value="Chưa thanh toán" selected="@(f?.TrangThaiThanhToan == "Chưa thanh toán")">Chưa thanh toán</option>
-            <option value="Đã thanh toán" selected="@(f?.TrangThaiThanhToan == "Đã thanh toán")">Đã thanh toán</option>
-        </select>
-    </div>
-    <div class="col-md-2">
-        <input type="date" class="form-control" name="From" value="@(f?.From?.ToString("yyyy-MM-dd"))" />
-    </div>
-    <div class="col-md-2">
-        <input type="date" class="form-control" name="To" value="@(f?.To?.ToString("yyyy-MM-dd"))" />
-    </div>
-    <div class="col-md-3">
-        <button class="btn btn-primary">Lọc</button>
-        <a class="btn btn-outline-secondary" href="@Url.Action("Index")">Xóa lọc</a>
-    </div>
-</form>
+<h2 class="mt-3">Danh sách hóa đơn</h2>
 
 @if (TempData["msg"] != null)
 {
-    <div class="alert alert-success">@TempData["msg"]</div>
+    <div class="alert alert-info">@TempData["msg"]</div>
 }
 
-<table class="table table-striped align-middle">
-    <thead>
+<table class="table table-bordered table-striped">
+    <thead class="table-light">
         <tr>
             <th>ID</th>
             <th>Ngày lập</th>
             <th>Khách hàng</th>
             <th>SĐT</th>
             <th class="text-end">Tổng tiền</th>
-            <th>TT Thanh toán</th>
-            <th class="text-end">Thao tác</th>
+            <th>Trạng thái</th>
+            <th>Loại đặt bàn</th>
+            <th class="text-center">Thao tác</th>
         </tr>
     </thead>
     <tbody>
@@ -53,26 +28,54 @@
                 <td>@x.NgayLap.ToString("dd/MM/yyyy HH:mm")</td>
                 <td>@x.KhachHang</td>
                 <td>@x.SoDienThoai</td>
-                <td class="text-end">@x.TongTien.ToString("#,0")</td>
+                <td class="text-end">@x.TongTien.ToString("#,##0")</td>
+
                 <td>
                     @if (x.TrangThaiThanhToan == "Đã thanh toán")
                     {
                         <span class="badge bg-success">Đã thanh toán</span>
                     }
+                    else if (x.TrangThaiXacNhan == "Đã xác nhận")
+                    {
+                        <span class="badge bg-primary">Đã xác nhận</span>
+                    }
                     else
                     {
-
-                        <span class="badge bg-warning text-dark">Chưa thanh toán</span>
+                        <span class="badge bg-warning text-dark">Chờ xác nhận</span>
                     }
                 </td>
-                <td class="text-end">
-                    <a class="btn btn-sm btn-primary" href="@Url.Action("Edit", new { id = x.HoaDonID })">Sửa</a>
-                    <a class="btn btn-sm btn-secondary" href="@Url.Action("Print", new { id = x.HoaDonID })" target="_blank">In</a>
 
-                    @if (x.TrangThaiThanhToan != "Đã thanh toán")
+                <td>
+                    @if (x.LoaiDatBan == "Offline")
                     {
-                        <form method="post" asp-action="ConfirmPayment" asp-route-id="@x.HoaDonID" style="display:inline">
-                            <button class="btn btn-sm btn-success" onclick="return confirm('Xác nhận đã thanh toán?')">Xác nhận TT</button>
+                        <span class="badge bg-dark">Offline</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-info">Online</span>
+                    }
+                </td>
+
+                <td class="text-center">
+                    @if (x.TrangThaiThanhToan == "Đã thanh toán")
+                    {
+                        <a asp-action="Edit" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-info">
+                            <i class="bi bi-eye"></i> Xem
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-action="Edit" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-warning">
+                            <i class="bi bi-pencil-square"></i> Sửa
+                        </a>
+                    }
+
+                    @if (x.TrangThaiXacNhan == "Chờ xác nhận")
+                    {
+                        <form asp-action="ConfirmInvoice" asp-route-id="@x.HoaDonID" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-success">
+                                <i class="bi bi-check-circle"></i> Xác nhận
+                            </button>
                         </form>
                     }
                 </td>

@@ -2,6 +2,9 @@
 @{
     var monAn = (List<Quanlinhahang.Models.MonAn>)ViewBag.MonAn;
     ViewData["Title"] = $"Sửa hóa đơn #{Model.HoaDonID}";
+    bool daXacNhan = (ViewBag.TrangThaiXacNhan == "Đã xác nhận");
+    bool daThanhToan = (bool)(ViewBag.DaThanhToan ?? false);
+    bool khongTheSua = daXacNhan && daThanhToan;
 }
 
 <h2 class="mt-3">Hóa đơn #@Model.HoaDonID</h2>
@@ -9,6 +12,19 @@
 @if (TempData["msg"] != null)
 {
     <div class="alert alert-success">@TempData["msg"]</div>
+}
+
+@if (khongTheSua)
+{
+    <div class="alert alert-warning">
+        Hóa đơn này đã được xác nhận và thanh toán — bạn chỉ có thể xem, không thể chỉnh sửa.
+    </div>
+}
+else if (daXacNhan)
+{
+    <div class="alert alert-info">
+        Hóa đơn đã xác nhận — bạn chỉ có thể chỉnh sửa trạng thái thanh toán.
+    </div>
 }
 
 <div class="row">
@@ -27,35 +43,41 @@
                         <td class="text-end">@i.DonGia.ToString("#,0")</td>
                         <td class="text-end">@i.ThanhTien.ToString("#,0")</td>
                         <td>
-                            <form method="post" asp-action="RemoveItem">
-                                <input type="hidden" name="hoaDonId" value="@Model.HoaDonID" />
-                                <input type="hidden" name="monAnId" value="@i.MonAnID" />
-                                <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa món này?')">Xóa</button>
-                            </form>
+                            @if (!khongTheSua)
+                            {
+                                <form method="post" asp-action="RemoveItem">
+                                    <input type="hidden" name="hoaDonId" value="@Model.HoaDonID" />
+                                    <input type="hidden" name="monAnId" value="@i.MonAnID" />
+                                    <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa món này?')">Xóa</button>
+                                </form>
+                            }
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
 
-        <form method="post" asp-action="AddItem" class="row g-2">
-            <input type="hidden" name="hoaDonId" value="@Model.HoaDonID" />
-            <div class="col-md-7">
-                <select class="form-select" name="monAnId" required>
-                    <option value="">-- Chọn món --</option>
-                    @foreach (var m in monAn)
-                    {
-                        <option value="@m.MonAnID">@m.TenMon (@m.DonGia.ToString("#,0"))</option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-3">
-                <input class="form-control" type="number" name="soLuong" min="1" value="1" />
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-primary w-100">Thêm</button>
-            </div>
-        </form>
+        @if (!khongTheSua)
+        {
+            <form method="post" asp-action="AddItem" class="row g-2">
+                <input type="hidden" name="hoaDonId" value="@Model.HoaDonID" />
+                <div class="col-md-7">
+                    <select class="form-select" name="monAnId" required>
+                        <option value="">-- Chọn món --</option>
+                        @foreach (var m in monAn)
+                        {
+                            <option value="@m.MonAnID">@m.TenMon (@m.DonGia.ToString("#,0"))</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input class="form-control" type="number" name="soLuong" min="1" value="1" />
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100">Thêm</button>
+                </div>
+            </form>
+        }
     </div>
 
     <div class="col-md-5">
@@ -64,32 +86,34 @@
             <input type="hidden" asp-for="HoaDonID" />
             <input type="hidden" asp-for="DatBanID" />
 
-            <div class="mb-2">
-                <label class="form-label">Giảm giá</label>
-                <input class="form-control" asp-for="GiamGia" type="number" step="1000" min="0" />
-            </div>
-            <div class="mb-2">
-                <label class="form-label">Điểm sử dụng</label>
-                <input class="form-control" asp-for="DiemSuDung" type="number" min="0" />
-            </div>
-            <div class="mb-2">
-                <label class="form-label">Hình thức thanh toán</label>
-                <select class="form-select" asp-for="HinhThucThanhToan">
-                    <option value="">-- Chọn --</option>
-                    <option>Tiền mặt</option>
-                    <option>Thẻ</option>
-                    <option>QR</option>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Trạng thái</label>
-                <select class="form-select" asp-for="TrangThaiThanhToan">
-                    <option>Chưa thanh toán</option>
-                    <option>Đã thanh toán</option>
-                </select>
-            </div>
+            <fieldset @(khongTheSua ? "disabled" : "")>
+                <div class="mb-2">
+                    <label class="form-label">Giảm giá</label>
+                    <input class="form-control" asp-for="GiamGia" type="number" step="1000" min="0" />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Điểm sử dụng</label>
+                    <input class="form-control" asp-for="DiemSuDung" type="number" min="0" />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Hình thức thanh toán</label>
+                    <select class="form-select" asp-for="HinhThucThanhToan">
+                        <option value="">-- Chọn --</option>
+                        <option>Tiền mặt</option>
+                        <option>Thẻ</option>
+                        <option>QR</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Trạng thái</label>
+                    <select class="form-select" asp-for="TrangThaiThanhToan">
+                        <option>Chưa thanh toán</option>
+                        <option>Đã thanh toán</option>
+                    </select>
+                </div>
+            </fieldset>
 
-            <button class="btn btn-success">Lưu</button>
+            <button class="btn btn-success" @(khongTheSua ? "disabled" : "")>Lưu</button>
             <a class="btn btn-secondary" href="@Url.Action("Index")">Quay lại</a>
             <a class="btn btn-outline-dark" target="_blank" href="@Url.Action("Print", new { id = Model.HoaDonID })">In / Xuất PDF</a>
         </form>

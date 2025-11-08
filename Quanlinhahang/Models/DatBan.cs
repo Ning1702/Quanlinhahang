@@ -15,5 +15,6 @@ namespace Quanlinhahang.Models
         public string? YeuCauDacBiet { get; set; }
         public string TrangThai { get; set; } = "Chờ xác nhận"; // Chờ xác nhận / Xác nhận / Hủy
         public DateTime NgayTao { get; set; }
+        public string LoaiDatBan { get; set; } = "Online";
     }
 }
