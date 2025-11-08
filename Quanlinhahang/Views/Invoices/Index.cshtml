@@ -39,6 +39,10 @@
                     {
                         <span class="badge bg-primary">Đã xác nhận</span>
                     }
+                    else if (x.TrangThaiXacNhan == "Đã hủy")
+                    {
+                        <span class="badge bg-secondary">Đã hủy</span>
+                    }
                     else
                     {
                         <span class="badge bg-warning text-dark">Chờ xác nhận</span>
@@ -57,44 +61,78 @@
                 </td>
 
                 <td class="text-center">
-                    @* 3 trạng thái thao tác *@
+                    @* 1. ĐÃ THANH TOÁN: Xem + In *@
                     @if (x.TrangThaiThanhToan == "Đã thanh toán")
                     {
-                        @* 3. ĐÃ THANH TOÁN: Xem + In *@
-                        <a asp-action="Details" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-info me-1">
+                        <a asp-controller="Invoices" asp-action="Details"
+                           asp-route-id="@x.HoaDonID"
+                           class="btn btn-sm btn-info me-1">
                             <i class="bi bi-eye"></i> Xem
                         </a>
-                        <a asp-action="Print" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-secondary">
+                        <a asp-controller="Invoices" asp-action="Print"
+                           asp-route-id="@x.HoaDonID"
+                           class="btn btn-sm btn-secondary">
                             <i class="bi bi-printer"></i> In
                         </a>
                     }
+                    @* 2. ĐÃ XÁC NHẬN: Xem + Sửa + Hủy (KHÔNG Thanh toán) *@
                     else if (x.TrangThaiXacNhan == "Đã xác nhận")
                     {
-                        @* 2. ĐÃ XÁC NHẬN: Xem + Sửa + In *@
-                        <a asp-action="Details" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-info me-1">
+                        <a asp-controller="Invoices" asp-action="Details"
+                           asp-route-id="@x.HoaDonID"
+                           class="btn btn-sm btn-info me-1">
                             <i class="bi bi-eye"></i> Xem
                         </a>
-                        <a asp-action="Edit" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-warning me-1">
+
+                        <a asp-controller="Invoices" asp-action="Edit"
+                           asp-route-id="@x.HoaDonID"
+                           class="btn btn-sm btn-warning me-1">
                             <i class="bi bi-pencil-square"></i> Sửa
                         </a>
-                        <a asp-action="Print" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-secondary">
-                            <i class="bi bi-printer"></i> In
+
+                        <form asp-controller="Invoices"
+                              asp-action="HuyHoaDon"
+                              asp-route-id="@x.HoaDonID"
+                              method="post"
+                              style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <button type="submit"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Bạn có chắc chắn muốn hủy hóa đơn này?');">
+                                <i class="bi bi-x-circle"></i> Hủy
+                            </button>
+                        </form>
+                    }
+                    @* 3. ĐÃ HỦY: chỉ cho xem *@
+                    else if (x.TrangThaiXacNhan == "Đã hủy")
+                    {
+                        <a asp-controller="Invoices" asp-action="Details"
+                           asp-route-id="@x.HoaDonID"
+                           class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-eye"></i> Xem
                         </a>
                     }
+                    @* 4. CHỜ XÁC NHẬN / CHƯA XÁC NHẬN:
+                       Xem = chỉ xem các món khách đã đặt (Details),
+                       + nút Xác nhận. Không Sửa, không Thanh toán, không In. *@
                     else
                     {
-                        @* 1. CHỜ XÁC NHẬN: Xác nhận + Sửa + In *@
-                        <form asp-action="ConfirmInvoice" asp-route-id="@x.HoaDonID" method="post" style="display:inline;">
-                            <button type="submit" class="btn btn-sm btn-success me-1">
+                        <a asp-controller="Invoices" asp-action="Details"
+                           asp-route-id="@x.HoaDonID"
+                           class="btn btn-sm btn-info me-1">
+                            <i class="bi bi-eye"></i> Xem
+                        </a>
+
+                        <form asp-controller="Invoices"
+                              asp-action="ConfirmInvoice"
+                              asp-route-id="@x.HoaDonID"
+                              method="post"
+                              style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-success">
                                 <i class="bi bi-check-circle"></i> Xác nhận
                             </button>
                         </form>
-                        <a asp-action="Edit" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-warning me-1">
-                            <i class="bi bi-pencil-square"></i> Sửa
-                        </a>
-                        <a asp-action="Print" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-secondary">
-                            <i class="bi bi-printer"></i> In
-                        </a>
                     }
                 </td>
             </tr>
