@@ -51,7 +51,6 @@ else if (daXacNhan)
                             {
                                 <div class="d-flex justify-content-center align-items-center">
 
-                                    <!-- Nút trừ: giảm 1, không cho nhỏ hơn 1 -->
                                     <form method="post"
                                           asp-action="RemoveItem"
                                           asp-controller="Invoices"
@@ -67,10 +66,8 @@ else if (daXacNhan)
                                         </button>
                                     </form>
 
-                                    <!-- Số lượng hiện tại -->
                                     <span class="mx-2 fw-bold">@i.SoLuong</span>
 
-                                    <!-- Nút cộng: tăng 1 -->
                                     <form method="post"
                                           asp-action="AddItem"
                                           asp-controller="Invoices"
@@ -115,6 +112,51 @@ else if (daXacNhan)
                     </tr>
                 }
             </tbody>
+
+            @{
+                // Tính toán tổng tiền dựa trên các món trong Model
+                var subTotal = Model.Items.Sum(i => i.ThanhTien);
+                var vat = subTotal * 0.1m; // 10% VAT
+
+                // Tổng tiền cuối cùng (bao gồm giảm giá/điểm)
+                var finalTotal = (subTotal + vat) - Model.GiamGia - Model.DiemSuDung;
+                if (finalTotal < 0) { finalTotal = 0; }
+            }
+            <tfoot class="table-light">
+                <tr>
+                    <td colspan="3" class="text-end"><strong>Tổng cộng (Tạm tính):</strong></td>
+                    <td class="text-end"><strong>@subTotal.ToString("#,##0")</strong></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="text-end"><strong>VAT (10%):</strong></td>
+                    <td class="text-end">@vat.ToString("#,##0")</td>
+                    <td></td>
+                </tr>
+
+                @if (Model.GiamGia > 0)
+                {
+                    <tr>
+                        <td colspan="3" class="text-end text-danger">Giảm giá:</td>
+                        <td class="text-end text-danger">- @Model.GiamGia.ToString("#,##0")</td>
+                        <td></td>
+                    </tr>
+                }
+                @if (Model.DiemSuDung > 0)
+                {
+                    <tr>
+                        <td colspan="3" class="text-end text-danger">Dùng điểm:</td>
+                        <td class="text-end text-danger">- @Model.DiemSuDung.ToString("#,##0")</td>
+                        <td></td>
+                    </tr>
+                }
+
+                <tr class="h5">
+                    <td colspan="3" class="text-end"><strong>Thành tiền (Khách trả):</strong></td>
+                    <td class="text-end"><strong>@finalTotal.ToString("#,##0")</strong></td>
+                    <td></td>
+                </tr>
+            </tfoot>
         </table>
 
         @if (!khongTheSua)

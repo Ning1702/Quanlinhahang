@@ -8,7 +8,6 @@ namespace Quanlinhahang.Models.ViewModels
         public string? Search { get; set; }
         public string? TrangThaiThanhToan { get; set; } // "Chưa thanh toán" / "Đã thanh toán" / null
         public string? TrangThaiXacNhan { get; set; }   // ✅ Thêm mới
-        public string? LoaiDatBan { get; set; }         // ✅ Thêm mới: "Online" / "Offline"
 
         [DataType(DataType.Date)]
         public DateTime? From { get; set; }
@@ -28,7 +27,6 @@ namespace Quanlinhahang.Models.ViewModels
 
         public string TrangThaiThanhToan { get; set; } = "";
         public string TrangThaiXacNhan { get; set; } = "";  // ✅ Thêm mới
-        public string LoaiDatBan { get; set; } = "";        // ✅ Thêm mới
     }
 
     // ✏️ ViewModel chỉnh sửa / tạo hóa đơn
@@ -42,7 +40,6 @@ namespace Quanlinhahang.Models.ViewModels
 
         public string TrangThaiThanhToan { get; set; } = "Chưa thanh toán";
         public string TrangThaiXacNhan { get; set; } = "Chưa xác nhận";  // ✅ Thêm mới
-        public string LoaiDatBan { get; set; } = "Online";               // ✅ Thêm mới
 
         public List<ItemLine> Items { get; set; } = new();
 

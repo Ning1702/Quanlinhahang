@@ -1,4 +1,10 @@
 ﻿@model IEnumerable<Quanlinhahang.Models.ViewModels.InvoiceRowVM>
+@using Quanlinhahang.Models.ViewModels
+
+@{
+    var currentStatus = ViewBag.Status as string ?? "";
+    var filter = ViewBag.Filter as InvoiceFilterVM;
+}
 
 <h2 class="mt-3">Danh sách hóa đơn</h2>
 
@@ -6,6 +12,56 @@
 {
     <div class="alert alert-info">@TempData["msg"]</div>
 }
+
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <a class="nav-link @(currentStatus == "" ? "active" : "")"
+           asp-action="Index" asp-route-status="">Tất cả</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(currentStatus == "ChoXacNhan" ? "active" : "")"
+           asp-action="Index" asp-route-status="ChoXacNhan">Chờ xác nhận</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(currentStatus == "DaXacNhan" ? "active" : "")"
+           asp-action="Index" asp-route-status="DaXacNhan">Đã xác nhận</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(currentStatus == "DangPhucVu" ? "active" : "")"
+           asp-action="Index" asp-route-status="DangPhucVu">Đang phục vụ</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(currentStatus == "DaThanhToan" ? "active" : "")"
+           asp-action="Index" asp-route-status="DaThanhToan">Đã thanh toán</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(currentStatus == "DaHuy" ? "active" : "")"
+           asp-action="Index" asp-route-status="DaHuy">Đã hủy</a>
+    </li>
+</ul>
+
+<form asp-action="Index" method="get" class="mb-3">
+    <input type="hidden" name="status" value="@currentStatus" />
+
+    <div class="row g-2">
+        <div class="col-md-4">
+            <input type="text" name="Search" class="form-control" placeholder="Tìm khách hàng, SĐT..."
+                   value="@(filter?.Search)" />
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="From" class="form-control"
+                   value="@(filter?.From?.ToString("yyyy-MM-dd"))" />
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="To" class="form-control"
+                   value="@(filter?.To?.ToString("yyyy-MM-dd"))" />
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Tìm</button>
+        </div>
+    </div>
+</form>
+
 
 <table class="table table-bordered table-striped">
     <thead class="table-light">
@@ -16,14 +72,13 @@
             <th>SĐT</th>
             <th class="text-end">Tổng tiền</th>
             <th>Trạng thái</th>
-            <th>Loại đặt bàn</th>
             <th class="text-center">Thao tác</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var x in Model)
         {
-            <tr>
+            <tr id="invoice-row-@x.HoaDonID">
                 <td>@x.HoaDonID</td>
                 <td>@x.NgayLap.ToString("dd/MM/yyyy HH:mm")</td>
                 <td>@x.KhachHang</td>
@@ -34,6 +89,10 @@
                     @if (x.TrangThaiThanhToan == "Đã thanh toán")
                     {
                         <span class="badge bg-success">Đã thanh toán</span>
+                    }
+                    else if (x.TrangThaiXacNhan == "Đang phục vụ")
+                    {
+                        <span class="badge bg-info">Đang phục vụ</span>
                     }
                     else if (x.TrangThaiXacNhan == "Đã xác nhận")
                     {
@@ -49,93 +108,183 @@
                     }
                 </td>
 
-                <td>
-                    @if (x.LoaiDatBan == "Offline")
-                    {
-                        <span class="badge bg-dark">Offline</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-info">Online</span>
-                    }
-                </td>
-
                 <td class="text-center">
-                    @* 1. ĐÃ THANH TOÁN: Xem + In *@
-                    @if (x.TrangThaiThanhToan == "Đã thanh toán")
-                    {
-                        <a asp-controller="Invoices" asp-action="Details"
-                           asp-route-id="@x.HoaDonID"
-                           class="btn btn-sm btn-info me-1">
-                            <i class="bi bi-eye"></i> Xem
-                        </a>
-                        <a asp-controller="Invoices" asp-action="Print"
-                           asp-route-id="@x.HoaDonID"
-                           class="btn btn-sm btn-secondary">
-                            <i class="bi bi-printer"></i> In
-                        </a>
-                    }
-                    @* 2. ĐÃ XÁC NHẬN: Xem + Sửa + Hủy (KHÔNG Thanh toán) *@
-                    else if (x.TrangThaiXacNhan == "Đã xác nhận")
-                    {
-                        <a asp-controller="Invoices" asp-action="Details"
-                           asp-route-id="@x.HoaDonID"
-                           class="btn btn-sm btn-info me-1">
-                            <i class="bi bi-eye"></i> Xem
-                        </a>
 
-                        <a asp-controller="Invoices" asp-action="Edit"
-                           asp-route-id="@x.HoaDonID"
-                           class="btn btn-sm btn-warning me-1">
-                            <i class="bi bi-pencil-square"></i> Sửa
-                        </a>
-
-                        <form asp-controller="Invoices"
-                              asp-action="HuyHoaDon"
-                              asp-route-id="@x.HoaDonID"
-                              method="post"
-                              style="display:inline;">
-                            @Html.AntiForgeryToken()
-                            <button type="submit"
-                                    class="btn btn-sm btn-danger"
-                                    onclick="return confirm('Bạn có chắc chắn muốn hủy hóa đơn này?');">
-                                <i class="bi bi-x-circle"></i> Hủy
-                            </button>
-                        </form>
-                    }
-                    @* 3. ĐÃ HỦY: chỉ cho xem *@
-                    else if (x.TrangThaiXacNhan == "Đã hủy")
+                    @if (currentStatus == "")
                     {
-                        <a asp-controller="Invoices" asp-action="Details"
-                           asp-route-id="@x.HoaDonID"
-                           class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-eye"></i> Xem
+                        // Tab "Tất cả"
+                        string targetStatus = "ChoXacNhan";
+                        if (x.TrangThaiThanhToan == "Đã thanh toán")
+                        {
+                            targetStatus = "DaThanhToan";
+                        }
+                        else if (x.TrangThaiXacNhan == "Đã hủy")
+                        {
+                            targetStatus = "DaHuy";
+                        }
+                        else if (x.TrangThaiXacNhan == "Đang phục vụ")
+                        {
+                            targetStatus = "DangPhucVu";
+                        }
+                        else if (x.TrangThaiXacNhan == "Đã xác nhận")
+                        {
+                            targetStatus = "DaXacNhan";
+                        }
+
+                        <a asp-controller="Invoices" asp-action="Index"
+                           asp-route-status="@targetStatus"
+                           asp-route-highlight="@x.HoaDonID"
+                           class="btn btn-sm btn-info me-1">
+                            <i class="bi bi-box-arrow-up-right"></i> Quản lý
                         </a>
                     }
-                    @* 4. CHỜ XÁC NHẬN / CHƯA XÁC NHẬN:
-                       Xem = chỉ xem các món khách đã đặt (Details),
-                       + nút Xác nhận. Không Sửa, không Thanh toán, không In. *@
                     else
                     {
-                        <a asp-controller="Invoices" asp-action="Details"
-                           asp-route-id="@x.HoaDonID"
-                           class="btn btn-sm btn-info me-1">
-                            <i class="bi bi-eye"></i> Xem
-                        </a>
+                        // Các tab khác
 
-                        <form asp-controller="Invoices"
-                              asp-action="ConfirmInvoice"
-                              asp-route-id="@x.HoaDonID"
-                              method="post"
-                              style="display:inline;">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-sm btn-success">
-                                <i class="bi bi-check-circle"></i> Xác nhận
-                            </button>
-                        </form>
+                        @* 1. ĐÃ THANH TOÁN: Xem + In *@
+                        @if (x.TrangThaiThanhToan == "Đã thanh toán")
+                        {
+                            <a asp-controller="Invoices" asp-action="Details"
+                               asp-route-id="@x.HoaDonID"
+                               class="btn btn-sm btn-info me-1">
+                                <i class="bi bi-eye"></i> Xem
+                            </a>
+                            <a asp-controller="Invoices" asp-action="Print"
+                               asp-route-id="@x.HoaDonID"
+                               class="btn btn-sm btn-secondary">
+                                <i class="bi bi-printer"></i> In
+                            </a>
+                        }
+
+                        @* 2. ĐÃ XÁC NHẬN: Phục vụ + Chi tiết (Edit) + Hủy *@
+                        else if (x.TrangThaiXacNhan == "Đã xác nhận")
+                        {
+                            <form asp-controller="Invoices"
+                                  asp-action="StartServing"
+                                  asp-route-id="@x.HoaDonID"
+                                  method="post"
+                                  style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="currentStatus" value="@currentStatus" />
+                                <button type="submit" class="btn btn-sm btn-primary me-1">
+                                    <i class="bi bi-play-circle"></i> Phục vụ
+                                </button>
+                            </form>
+
+                            <a asp-controller="Invoices" asp-action="Edit"
+                               asp-route-id="@x.HoaDonID"
+                               class="btn btn-sm btn-warning me-1">
+                                <i class="bi bi-pencil-square"></i> Chi tiết
+                            </a>
+
+                            <form asp-controller="Invoices"
+                                  asp-action="HuyHoaDon"
+                                  asp-route-id="@x.HoaDonID"
+                                  method="post"
+                                  style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="currentStatus" value="@currentStatus" />
+                                <button type="submit"
+                                        class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Bạn có chắc chắn muốn hủy hóa đơn này?');">
+                                    <i class="bi bi-x-circle"></i> Hủy
+                                </button>
+                            </form>
+                        }
+
+                        @* 3. ĐANG PHỤC VỤ: Xem + Chi tiết (Edit) + Hủy *@
+                        else if (x.TrangThaiXacNhan == "Đang phục vụ")
+                        {
+                            <a asp-controller="Invoices" asp-action="Details"
+                               asp-route-id="@x.HoaDonID"
+                               class="btn btn-sm btn-info me-1">
+                                <i class="bi bi-eye"></i> Xem
+                            </a>
+
+                            <a asp-controller="Invoices" asp-action="Edit"
+                               asp-route-id="@x.HoaDonID"
+                               class="btn btn-sm btn-warning me-1">
+                                <i class="bi bi-pencil-square"></i> Chi tiết
+                            </a>
+
+                            <form asp-controller="Invoices"
+                                  asp-action="HuyHoaDon"
+                                  asp-route-id="@x.HoaDonID"
+                                  method="post"
+                                  style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="currentStatus" value="@currentStatus" />
+                                <button type="submit"
+                                        class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Bạn có chắc chắn muốn hủy hóa đơn này?');">
+                                    <i class="bi bi-x-circle"></i> Hủy
+                                </button>
+                            </form>
+                        }
+
+                        @* 4. ĐÃ HỦY: Chỉ cho Xem *@
+                        else if (x.TrangThaiXacNhan == "Đã hủy")
+                        {
+                            <a asp-controller="Invoices" asp-action="Details"
+                               asp-route-id="@x.HoaDonID"
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-eye"></i> Xem
+                            </a>
+                        }
+
+                        @* 5. CHỜ XÁC NHẬN / CHƯA XÁC NHẬN: Chi tiết (Edit) + Xác nhận *@
+                        else
+                        {
+                            <a asp-controller="Invoices" asp-action="Edit"
+                               asp-route-id="@x.HoaDonID"
+                               class="btn btn-sm btn-warning me-1">
+                                <i class="bi bi-pencil-square"></i> Chi tiết
+                            </a>
+
+                            <form asp-controller="Invoices"
+                                  asp-action="ConfirmInvoice"
+                                  asp-route-id="@x.HoaDonID"
+                                  method="post"
+                                  style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="currentStatus" value="@currentStatus" />
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="bi bi-check-circle"></i> Xác nhận
+                                </button>
+                            </form>
+                        }
                     }
                 </td>
             </tr>
         }
     </tbody>
 </table>
+
+@section Scripts {
+    <style>
+        tr.row-highlight {
+            background-color: #fff3cd !important;
+            transition: background-color 1.5s ease-out;
+        }
+    </style>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const highlightId = urlParams.get('highlight');
+
+            if (highlightId) {
+                const row = document.getElementById('invoice-row-' + highlightId);
+
+                if (row) {
+                    row.classList.add('row-highlight');
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(function() {
+                        row.classList.remove('row-highlight');
+                    }, 2000);
+                }
+            }
+        });
+    </script>
+}
