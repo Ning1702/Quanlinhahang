@@ -1,74 +1,106 @@
 ﻿@model Quanlinhahang.Models.HoaDon
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = $"Hóa Đơn #{Model.HoaDonID}";
+
+    var returnUrl = ViewBag.RefererUrl as string;
+    if (string.IsNullOrEmpty(returnUrl))
+    {
+        returnUrl = Url.Action("Index"); // Fallback nếu không có Referer
+    }
 }
 
-<h1>Details</h1>
+<h2 class="mt-3">Hóa Đơn #@Model.HoaDonID</h2>
+<hr />
 
-<div>
-    <h4>HoaDon</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.TaiKhoanID)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.TaiKhoanID)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.NgayLap)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.NgayLap)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.TongTien)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.TongTien)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.GiamGia)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.GiamGia)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.DiemCong)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.DiemCong)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.DiemSuDung)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.DiemSuDung)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.HinhThucThanhToan)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.HinhThucThanhToan)
-        </dd>
+<div class="row">
+    <div class="col-md-5">
+        <h5>Thông tin chung</h5>
+        <dl class="row">
 
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.TrangThai)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.TrangThai)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.DatBan)
-        </dt>
+            <dt class="col-sm-5">Ngày lập</dt>
+            <dd class="col-sm-7">@Html.DisplayFor(model => model.NgayLap)</dd>
 
-        <dd class="col-sm-10">
-            @Model.DatBan?.DatBanID
-        </dd>
-    </dl>
+            <dt class="col-sm-5">Trạng thái</dt>
+            <dd class="col-sm-7">@Html.DisplayFor(model => model.TrangThai)</dd>
+
+            <dt class="col-sm-5">Hình thức thanh toán</dt>
+            <dd class="col-sm-7">@Html.DisplayFor(model => model.HinhThucThanhToan)</dd>
+
+            <dt class="col-sm-5">Mã Đặt bàn</dt>
+            <dd class="col-sm-7">@Model.DatBan?.DatBanID</dd>
+
+            <dt class="col-sm-5">Nhân viên</dt>
+            <dd class="col-sm-7">@Html.DisplayFor(model => model.TaiKhoanID)</dd>
+
+        </dl>
+    </div>
+
+    <div class="col-md-7">
+        <h5>Danh sách món</h5>
+        <table class="table table-bordered table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Tên món</th>
+                    <th class="text-end">SL</th>
+                    <th class="text-end">Đơn giá</th>
+                    <th class="text-end">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.ChiTiet)
+                {
+                    <tr>
+                        <td>@item.MonAn?.TenMon</td>
+                        <td class="text-end">@item.SoLuong</td>
+                        <td class="text-end">@item.DonGia.ToString("#,##0")</td>
+                        <td class="text-end">@item.ThanhTien.ToString("#,##0")</td>
+                    </tr>
+                }
+            </tbody>
+
+            <tfoot class="table-light">
+                @{
+                    var subTotal = Model.ChiTiet.Sum(i => i.ThanhTien);
+                    var vat = subTotal * 0.1m;
+                    var finalTotal = (subTotal + vat) - Model.GiamGia - Model.DiemSuDung;
+                    if (finalTotal < 0) { finalTotal = 0; }
+                }
+                <tr>
+                    <td colspan="3" class="text-end">Tổng cộng (Tạm tính):</td>
+                    <td class="text-end">@subTotal.ToString("#,##0")</td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="text-end">VAT (10%):</td>
+                    <td class="text-end">@vat.ToString("#,##0")</td>
+                </tr>
+
+                @if (Model.GiamGia > 0)
+                {
+                    <tr>
+                        <td colspan="3" class="text-end text-danger">Giảm giá:</td>
+                        <td class="text-end text-danger">- @Model.GiamGia.ToString("#,##0")</td>
+                    </tr>
+                }
+                @if (Model.DiemSuDung > 0)
+                {
+                    <tr>
+                        <td colspan="3" class="text-end text-danger">Dùng điểm:</td>
+                        <td class="text-end text-danger">- @Model.DiemSuDung.ToString("#,##0")</td>
+                    </tr>
+                }
+
+                <tr class="h5">
+                    <td colspan="3" class="text-end"><strong>Thành tiền (Khách trả):</strong></td>
+                    <td class="text-end"><strong>@finalTotal.ToString("#,##0")</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.HoaDonID">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+
+<hr />
+
+<div class="text-end">
+    <a href="@returnUrl" class="btn btn-secondary">Quay lại</a>
 </div>

@@ -2,6 +2,13 @@
 
 @{
     ViewData["Title"] = "Delete";
+
+    // ===== THÊM KHỐI NÀY =====
+    var returnUrl = ViewBag.RefererUrl as string;
+    if (string.IsNullOrEmpty(returnUrl))
+    {
+        returnUrl = Url.Action("Index"); // Fallback nếu không có Referer
+    }
 }
 
 <h1>Delete</h1>
@@ -62,7 +69,6 @@
         <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.DatBan)
         </dt>
-
         <dd class="col-sm-10">
             @Model.DatBan?.DatBanID
         </dd>
@@ -71,6 +77,7 @@
     <form asp-action="Delete">
         <input type="hidden" asp-for="HoaDonID" />
         <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
+
+        <a href="@returnUrl" class="btn btn-secondary">Quay lại</a>
     </form>
 </div>

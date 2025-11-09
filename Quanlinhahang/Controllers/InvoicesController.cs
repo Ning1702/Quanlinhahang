@@ -164,28 +164,24 @@ namespace Quanlinhahang.Controllers
             return RedirectToAction(nameof(Index), new { status = currentStatus });
         }
 
-        // ===== ĐÃ SỬA THEO YÊU CẦU MỚI =====
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ThanhToan(int id, string currentStatus)
         {
-            var hd = await _db.HoaDons.FindAsync(id);
+            var hd = await _db.HoaDons
+                .Include(h => h.ChiTiet)
+                .FirstOrDefaultAsync(h => h.HoaDonID == id);
+
             if (hd == null) return NotFound();
 
             if (hd.TrangThai == "Đã thanh toán")
             {
                 TempData["msg"] = "⚠️ Hóa đơn này đã thanh toán rồi.";
             }
-            // Chỉ cho phép thanh toán khi "Đang phục vụ"
             else if (hd.TrangThai == "Đang phục vụ")
             {
-                // Cập nhật tổng tiền (VAT) lần cuối
                 await UpdateTongTienAsync(hd);
-
-                // Cập nhật trạng thái
                 hd.TrangThai = "Đã thanh toán";
-
-                // Lưu cả 2 thay đổi
                 await _db.SaveChangesAsync();
                 TempData["msg"] = "✅ Hóa đơn đã được thanh toán.";
             }
@@ -194,7 +190,6 @@ namespace Quanlinhahang.Controllers
                 TempData["msg"] = "⚠️ Hóa đơn phải ở trạng thái 'Đang phục vụ' mới có thể thanh toán.";
             }
 
-            // Luôn chuyển hướng về tab hiện tại (currentStatus)
             return RedirectToAction(nameof(Index), new { status = currentStatus });
         }
 
@@ -227,6 +222,8 @@ namespace Quanlinhahang.Controllers
         // GET: /Invoices/Edit/5
         public async Task<IActionResult> Edit(int id)
         {
+            ViewBag.RefererUrl = Request.Headers["Referer"].ToString();
+
             var hd = await _db.HoaDons
                 .Include(h => h.ChiTiet).ThenInclude(ct => ct.MonAn)
                 .FirstOrDefaultAsync(h => h.HoaDonID == id);
@@ -265,7 +262,10 @@ namespace Quanlinhahang.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Save(InvoiceEditVM vm)
         {
-            var hd = await _db.HoaDons.FindAsync(vm.HoaDonID);
+            var hd = await _db.HoaDons
+                .Include(h => h.ChiTiet)
+                .FirstOrDefaultAsync(h => h.HoaDonID == vm.HoaDonID);
+
             if (hd == null) return NotFound();
 
             if (hd.TrangThai == "Đã thanh toán")
@@ -378,11 +378,10 @@ namespace Quanlinhahang.Controllers
             return RedirectToAction(nameof(Edit), new { id = hoaDonId });
         }
 
-        // ===== ĐÃ SỬA: Nhận HoaDon thay vì ID và BỎ SaveChanges =====
         private Task UpdateTongTienAsync(HoaDon hd)
         {
-            // Không cần query lại, vì đã Include(h => h.ChiTiet) ở các hàm gọi
             if (hd == null) return Task.CompletedTask;
+            if (hd.ChiTiet == null) return Task.CompletedTask; // Thêm kiểm tra null cho ChiTiet
 
             var subTotal = hd.ChiTiet.Sum(x => x.ThanhTien);
             var vat = subTotal * 0.1m;
@@ -392,13 +391,15 @@ namespace Quanlinhahang.Controllers
 
             hd.TongTien = finalTotal;
 
-            // Không SaveChanges, để hàm gọi tự xử lý
             return Task.CompletedTask;
         }
 
+        // ===== ĐÃ SỬA: Thêm ViewBag.RefererUrl =====
         // GET: /Invoices/Details/5
         public async Task<IActionResult> Details(int id)
         {
+            ViewBag.RefererUrl = Request.Headers["Referer"].ToString();
+
             var hd = await _db.HoaDons
                 .Include(h => h.DatBan)
                 .Include(h => h.ChiTiet).ThenInclude(ct => ct.MonAn)
@@ -409,9 +410,12 @@ namespace Quanlinhahang.Controllers
             return View(hd);
         }
 
+        // ===== ĐÃ SỬA: Thêm ViewBag.RefererUrl =====
         // GET: /Invoices/Print/5
         public async Task<IActionResult> Print(int id)
         {
+            ViewBag.RefererUrl = Request.Headers["Referer"].ToString();
+
             var hd = await _db.HoaDons
                 .Include(h => h.DatBan)
                 .Include(h => h.ChiTiet).ThenInclude(ct => ct.MonAn)
@@ -420,6 +424,46 @@ namespace Quanlinhahang.Controllers
             if (hd == null) return NotFound();
 
             return View(hd);
+        }
+
+        // ===== ĐÃ THÊM: Hàm Delete (GET) =====
+        // GET: Invoices/Delete/5
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            ViewBag.RefererUrl = Request.Headers["Referer"].ToString();
+
+            var hoaDon = await _db.HoaDons
+                .Include(h => h.DatBan)
+                .FirstOrDefaultAsync(m => m.HoaDonID == id);
+
+            if (hoaDon == null)
+            {
+                return NotFound();
+            }
+
+            return View(hoaDon);
+        }
+
+        // POST: Invoices/Delete/5
+        // (Hàm Delete (POST) của bạn có thể đã tồn tại,
+        // nếu chưa có, bạn có thể thêm nó vào)
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var hoaDon = await _db.HoaDons.FindAsync(id);
+            if (hoaDon != null)
+            {
+                // Bạn có thể muốn kiểm tra logic (vd: không cho xóa nếu đã thanh toán)
+                _db.HoaDons.Remove(hoaDon);
+                await _db.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
         }
     }
 }

@@ -8,12 +8,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Quanlinhahang</title>
 
-    <!-- Bootstrap + CSS gốc -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Quanlinhahang.styles.css" asp-append-version="true" />
 
-    <!-- Font Awesome (cho icon menu) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
     <style>
@@ -78,6 +76,9 @@
             margin-left: 220px;
             transition: all 0.3s ease;
             width: 100%;
+            /* ===== THÊM 2 DÒNG NÀY ĐỂ FIX FOOTER ===== */
+            display: flex;
+            flex-direction: column;
         }
 
         #wrapper.toggled #page-content-wrapper {
@@ -91,24 +92,21 @@
 
         /* Responsive */
         @@media (max-width: 768px) {
-            #sidebar-wrapper
+            #sidebar-wrapper {
+                margin-left: -220px;
+            }
 
-        {
-            margin-left: -220px;
-        }
+            #wrapper.toggled #sidebar-wrapper {
+                margin-left: 0;
+            }
 
-        #wrapper.toggled #sidebar-wrapper {
-            margin-left: 0;
-        }
+            #page-content-wrapper {
+                margin-left: 0;
+            }
 
-        #page-content-wrapper {
-            margin-left: 0;
-        }
-
-        #wrapper.toggled #page-content-wrapper {
-            margin-left: 220px;
-        }
-
+            #wrapper.toggled #page-content-wrapper {
+                margin-left: 220px;
+            }
         }
 
         /* Footer fix */
@@ -117,13 +115,15 @@
             border-top: 1px solid #ddd;
             text-align: center;
             padding: 10px;
+            /* ===== THÊM DÒNG NÀY ĐỂ FIX FOOTER (Đẩy footer xuống) ===== */
+            margin-top: auto;
         }
     </style>
 </head>
 
 <body>
-    <div id="wrapper" class="d-flex">
-        <!-- Sidebar -->
+
+    <div id="wrapper" class="d-flex min-vh-100">
         <div id="sidebar-wrapper">
             <div class="sidebar-heading">
                 Quản lý nhà hàng
@@ -141,7 +141,6 @@
             </div>
         </div>
 
-        <!-- Phần nội dung trang -->
         <div id="page-content-wrapper">
             <header>
                 <nav class="navbar navbar-expand-sm navbar-light bg-light border-bottom shadow-sm mb-3">
@@ -171,12 +170,12 @@
             </header>
 
             <div class="container-fluid px-4">
-                <main role="main" class="pb-3">
+                <main role="main" class="pb-3 flex-grow-1">
                     @RenderBody()
                 </main>
             </div>
 
-            <footer class="border-top mt-auto text-muted">
+            <footer class="border-top text-muted">
                 <div class="container">
                     &copy; 2025 - Quanlinhahang -
                     <a asp-area="" asp-controller="Home" asp-action="Privacy">Chính sách bảo mật</a>
@@ -185,7 +184,6 @@
         </div>
     </div>
 
-    <!-- Script -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
