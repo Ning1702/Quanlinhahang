@@ -1,21 +1,25 @@
 ﻿@* ============================================
-   _Layout.cshtml - Kết hợp layout gốc + sidebar
+   _Layout.cshtml - Layout tổng + Sidebar + SweetAlert
    ============================================ *@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Quanlinhahang</title>
+    <title>@ViewData["Title"] - Quản lý nhà hàng</title>
 
+    <!-- Bootstrap -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Quanlinhahang.styles.css" asp-append-version="true" />
 
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
+    <!-- SweetAlert2 CSS (optional, theme đẹp) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
     <style>
-        /* Bố cục chính */
         body {
             overflow-x: hidden;
             font-family: "Segoe UI", sans-serif;
@@ -76,7 +80,6 @@
             margin-left: 220px;
             transition: all 0.3s ease;
             width: 100%;
-            /* ===== THÊM 2 DÒNG NÀY ĐỂ FIX FOOTER ===== */
             display: flex;
             flex-direction: column;
         }
@@ -85,37 +88,20 @@
             margin-left: 0;
         }
 
-        /* Navbar trên cùng */
-        .navbar {
-            z-index: 1050;
-        }
-
         /* Responsive */
         @@media (max-width: 768px) {
-            #sidebar-wrapper {
-                margin-left: -220px;
-            }
-
-            #wrapper.toggled #sidebar-wrapper {
-                margin-left: 0;
-            }
-
-            #page-content-wrapper {
-                margin-left: 0;
-            }
-
-            #wrapper.toggled #page-content-wrapper {
-                margin-left: 220px;
-            }
+            #sidebar-wrapper { margin-left: -220px; }
+            #wrapper.toggled #sidebar-wrapper { margin-left: 0; }
+            #page-content-wrapper { margin-left: 0; }
+            #wrapper.toggled #page-content-wrapper { margin-left: 220px; }
         }
 
-        /* Footer fix */
+        /* Footer */
         footer {
             background-color: #f8f9fa;
             border-top: 1px solid #ddd;
             text-align: center;
             padding: 10px;
-            /* ===== THÊM DÒNG NÀY ĐỂ FIX FOOTER (Đẩy footer xuống) ===== */
             margin-top: auto;
         }
     </style>
@@ -124,10 +110,13 @@
 <body>
 
     <div id="wrapper" class="d-flex min-vh-100">
+
+        <!-- SIDEBAR -->
         <div id="sidebar-wrapper">
             <div class="sidebar-heading">
                 Quản lý nhà hàng
             </div>
+
             <div class="list-group list-group-flush">
                 <a href="/Invoices" class="list-group-item list-group-item-action">
                     <i class="fas fa-file-invoice"></i> Hóa đơn
@@ -141,52 +130,65 @@
             </div>
         </div>
 
+        <!-- CONTENT -->
         <div id="page-content-wrapper">
+
             <header>
                 <nav class="navbar navbar-expand-sm navbar-light bg-light border-bottom shadow-sm mb-3">
                     <div class="container-fluid">
+
                         <button class="btn btn-outline-dark me-3" id="sidebarToggle">
                             <i class="fas fa-bars"></i>
                         </button>
-                        <a class="navbar-brand fw-bold" asp-area="" asp-controller="Home" asp-action="Index">Quanlinhahang</a>
 
-                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
-                                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">Quản lý nhà hàng</a>
+
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                                data-bs-target=".navbar-collapse">
                             <span class="navbar-toggler-icon"></span>
                         </button>
 
                         <div class="navbar-collapse collapse d-sm-inline-flex justify-content-end">
                             <ul class="navbar-nav">
                                 <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Trang chủ</a>
+                                    <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Trang chủ</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Chính sách</a>
+                                    <a class="nav-link text-dark" asp-controller="Home" asp-action="Privacy">Chính sách</a>
                                 </li>
                             </ul>
                         </div>
+
                     </div>
                 </nav>
             </header>
 
+            <!-- MAIN CONTENT -->
             <div class="container-fluid px-4">
                 <main role="main" class="pb-3 flex-grow-1">
                     @RenderBody()
                 </main>
             </div>
 
+            <!-- FOOTER -->
             <footer class="border-top text-muted">
                 <div class="container">
-                    &copy; 2025 - Quanlinhahang -
-                    <a asp-area="" asp-controller="Home" asp-action="Privacy">Chính sách bảo mật</a>
+                    &copy; 2025 - Quản lý nhà hàng -
+                    <a asp-controller="Home" asp-action="Privacy">Chính sách bảo mật</a>
                 </div>
             </footer>
+
         </div>
     </div>
 
+
+    <!-- JS -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         const wrapper = document.getElementById("wrapper");
