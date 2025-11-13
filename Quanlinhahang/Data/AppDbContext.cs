@@ -1,7 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Quanlinhahang.Models;
-using System.Collections.Generic;
-using System.Reflection.Emit;
 
 namespace Quanlinhahang.Data
 {
@@ -12,6 +10,8 @@ namespace Quanlinhahang.Data
         public DbSet<TaiKhoan> TaiKhoans => Set<TaiKhoan>();
         public DbSet<KhachHang> KhachHangs => Set<KhachHang>();
         public DbSet<DatBan> DatBans => Set<DatBan>();
+        public DbSet<BanPhong> BanPhongs => Set<BanPhong>();
+        public DbSet<KhungGio> KhungGios => Set<KhungGio>();
         public DbSet<HoaDon> HoaDons => Set<HoaDon>();
         public DbSet<ChiTietHoaDon> ChiTietHoaDons => Set<ChiTietHoaDon>();
         public DbSet<MonAn> MonAns => Set<MonAn>();
@@ -20,16 +20,9 @@ namespace Quanlinhahang.Data
         {
             base.OnModelCreating(mb);
 
-            // Khóa chính phức hợp CTHD
+            // === CHI TIẾT HÓA ĐƠN ===
             mb.Entity<ChiTietHoaDon>()
-              .HasKey(x => new { x.HoaDonID, x.MonAnID });
-
-            // Quan hệ
-            mb.Entity<HoaDon>()
-              .HasOne(h => h.DatBan)
-              .WithMany()
-              .HasForeignKey(h => h.DatBanID)
-              .OnDelete(DeleteBehavior.Restrict);
+              .HasKey(ct => new { ct.HoaDonID, ct.MonAnID });
 
             mb.Entity<ChiTietHoaDon>()
               .HasOne(ct => ct.HoaDon)
@@ -41,6 +34,34 @@ namespace Quanlinhahang.Data
               .HasOne(ct => ct.MonAn)
               .WithMany()
               .HasForeignKey(ct => ct.MonAnID)
+              .OnDelete(DeleteBehavior.Restrict);
+
+            // === HÓA ĐƠN – ĐẶT BÀN ===
+            mb.Entity<HoaDon>()
+              .HasOne(h => h.DatBan)
+              .WithMany()
+              .HasForeignKey(h => h.DatBanID)
+              .OnDelete(DeleteBehavior.Restrict);
+
+            // === ĐẶT BÀN – KHÁCH HÀNG ===
+            mb.Entity<DatBan>()
+              .HasOne(db => db.KhachHang)
+              .WithMany()
+              .HasForeignKey(db => db.KhachHangID)
+              .OnDelete(DeleteBehavior.Restrict);
+
+            // === ĐẶT BÀN – BÀN PHÒNG ===
+            mb.Entity<DatBan>()
+              .HasOne(db => db.BanPhong)
+              .WithMany()
+              .HasForeignKey(db => db.BanPhongID)
+              .OnDelete(DeleteBehavior.Restrict);
+
+            // === ĐẶT BÀN – KHUNG GIỜ ===
+            mb.Entity<DatBan>()
+              .HasOne(db => db.KhungGio)
+              .WithMany()
+              .HasForeignKey(db => db.KhungGioID)
               .OnDelete(DeleteBehavior.Restrict);
         }
     }
