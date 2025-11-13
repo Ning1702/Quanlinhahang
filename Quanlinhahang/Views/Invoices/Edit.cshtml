@@ -1,18 +1,17 @@
 ﻿@model Quanlinhahang.Models.ViewModels.InvoiceEditVM
+@using Microsoft.AspNetCore.Mvc.Rendering
+
 @{
     var monAn = (List<Quanlinhahang.Models.MonAn>)ViewBag.MonAn;
     ViewData["Title"] = $"Sửa hóa đơn #{Model.HoaDonID}";
 
-    // ===== ĐÃ SỬA LOGIC (Lấy URL quay lại) =====
     bool daThanhToan = (bool)(ViewBag.DaThanhToan ?? false);
     bool daXacNhan = (ViewBag.TrangThai == "Đã xác nhận");
-    bool khongTheSua = daThanhToan; // Chỉ khóa khi đã thanh toán
+    bool khongTheSua = daThanhToan;
 
     var returnUrl = ViewBag.RefererUrl as string;
     if (string.IsNullOrEmpty(returnUrl))
-    {
-        returnUrl = Url.Action("Index"); // Fallback nếu không có Referer
-    }
+        returnUrl = Url.Action("Index");
 }
 
 <h2 class="mt-3">Hóa đơn #@Model.HoaDonID</h2>
@@ -24,71 +23,55 @@
 
 @if (khongTheSua)
 {
-    <div class="alert alert-warning">
-        Hóa đơn này đã được xác nhận và thanh toán — bạn chỉ có thể xem, không thể chỉnh sửa.
-    </div>
+    <div class="alert alert-warning">Hóa đơn này đã được thanh toán — bạn chỉ có thể xem.</div>
 }
 else if (daXacNhan)
 {
-    <div class="alert alert-info">
-        Hóa đơn đã xác nhận — bạn chỉ có thể chỉnh sửa trạng thái thanh toán.
-    </div>
+    <div class="alert alert-info">Hóa đơn đã xác nhận — chỉ chỉnh sửa thanh toán.</div>
 }
 
 <div class="row">
+
+    <!-- ================== DANH SÁCH MÓN ================== -->
     <div class="col-md-7">
         <h5>Danh sách món</h5>
+
         <table class="table table-bordered">
             <thead>
                 <tr>
                     <th>Tên món</th>
-                    <th style="width:160px; text-align:center;">SL</th>
+                    <th style="width:150px;text-align:center">SL</th>
                     <th class="text-end" style="width:160px">Đơn giá</th>
                     <th class="text-end">Thành tiền</th>
                     <th style="width:80px"></th>
                 </tr>
             </thead>
+
             <tbody>
                 @foreach (var i in Model.Items)
                 {
                     <tr>
                         <td>@i.TenMon</td>
 
-                        <td style="text-align:center;">
+                        <td class="text-center">
                             @if (!khongTheSua)
                             {
                                 <div class="d-flex justify-content-center align-items-center">
-
-                                    <form method="post"
-                                          asp-action="RemoveItem"
-                                          asp-controller="Invoices"
-                                          class="me-1">
+                                    <form method="post" asp-action="RemoveItem" asp-controller="Invoices" class="me-1">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="hoaDonId" value="@Model.HoaDonID" />
                                         <input type="hidden" name="monAnId" value="@i.MonAnID" />
-                                        <button type="submit"
-                                                class="btn btn-sm btn-outline-secondary px-2"
-                                                @(i.SoLuong <= 1 ? "disabled" : "")
-                                                title="Giảm 1">
-                                            -
-                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary px-2" @(i.SoLuong <= 1 ? "disabled" : "")>-</button>
                                     </form>
 
                                     <span class="mx-2 fw-bold">@i.SoLuong</span>
 
-                                    <form method="post"
-                                          asp-action="AddItem"
-                                          asp-controller="Invoices"
-                                          class="ms-1">
+                                    <form method="post" asp-action="AddItem" asp-controller="Invoices" class="ms-1">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="hoaDonId" value="@Model.HoaDonID" />
                                         <input type="hidden" name="monAnId" value="@i.MonAnID" />
                                         <input type="hidden" name="soLuong" value="1" />
-                                        <button type="submit"
-                                                class="btn btn-sm btn-outline-secondary px-2"
-                                                title="Thêm 1">
-                                            +
-                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary px-2">+</button>
                                     </form>
                                 </div>
                             }
@@ -100,20 +83,19 @@ else if (daXacNhan)
 
                         <td class="text-end">@i.DonGia.ToString("#,0")</td>
                         <td class="text-end">@i.ThanhTien.ToString("#,0")</td>
+
                         <td>
                             @if (!khongTheSua)
                             {
                                 <form method="post"
                                       asp-action="RemoveItem"
                                       asp-controller="Invoices"
-                                      onsubmit="return confirm('Xóa hẳn món này khỏi hóa đơn?');">
+                                      onsubmit="return confirm('Xóa món này?');">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="hoaDonId" value="@Model.HoaDonID" />
                                     <input type="hidden" name="monAnId" value="@i.MonAnID" />
                                     <input type="hidden" name="removeAll" value="true" />
-                                    <button class="btn btn-sm btn-outline-danger">
-                                        Xóa
-                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger">Xóa</button>
                                 </form>
                             }
                         </td>
@@ -122,71 +104,63 @@ else if (daXacNhan)
             </tbody>
 
             @{
-                var subTotal = Model.Items.Sum(i => i.ThanhTien);
-                var vat = subTotal * 0.1m; // 10% VAT
-                var finalTotal = (subTotal + vat) - Model.GiamGia - Model.DiemSuDung;
-                if (finalTotal < 0) { finalTotal = 0; }
+                var sub = Model.Items.Sum(x => x.ThanhTien);
+                var vat = sub * 0.1m;
+                var final = sub + vat - Model.GiamGia - Model.DiemSuDung;
+                if (final < 0) final = 0;
             }
+
             <tfoot class="table-light">
                 <tr>
-                    <td colspan="3" class="text-end"><strong>Tổng cộng (Tạm tính):</strong></td>
-                    <td class="text-end"><strong>@subTotal.ToString("#,##0")</strong></td>
+                    <td colspan="3" class="text-end fw-bold">Tạm tính:</td>
+                    <td class="text-end fw-bold">@sub.ToString("#,0")</td>
                     <td></td>
                 </tr>
                 <tr>
-                    <td colspan="3" class="text-end"><strong>VAT (10%):</strong></td>
-                    <td class="text-end">@vat.ToString("#,##0")</td>
-                    <td></td>
+                    <td colspan="3" class="text-end">VAT (10%)</td>
+                    <td class="text-end">@vat.ToString("#,0")</td>
                 </tr>
-
                 @if (Model.GiamGia > 0)
                 {
                     <tr>
-                        <td colspan="3" class="text-end text-danger">Giảm giá:</td>
-                        <td class="text-end text-danger">- @Model.GiamGia.ToString("#,##0")</td>
-                        <td></td>
+                        <td colspan="3" class="text-end text-danger">Giảm giá</td>
+                        <td class="text-end text-danger">-@Model.GiamGia.ToString("#,0")</td>
                     </tr>
                 }
                 @if (Model.DiemSuDung > 0)
                 {
                     <tr>
-                        <td colspan="3" class="text-end text-danger">Dùng điểm:</td>
-                        <td class="text-end text-danger">- @Model.DiemSuDung.ToString("#,##0")</td>
-                        <td></td>
+                        <td colspan="3" class="text-end text-danger">Dùng điểm</td>
+                        <td class="text-end text-danger">-@Model.DiemSuDung.ToString("#,0")</td>
                     </tr>
                 }
-
                 <tr class="h5">
-                    <td colspan="3" class="text-end"><strong>Thành tiền (Khách trả):</strong></td>
-                    <td class="text-end"><strong>@finalTotal.ToString("#,##0")</strong></td>
-                    <td></td>
+                    <td colspan="3" class="text-end fw-bold">Thành tiền:</td>
+                    <td class="text-end fw-bold">@final.ToString("#,0")</td>
                 </tr>
             </tfoot>
-
         </table>
 
         @if (!khongTheSua)
         {
-            <form method="post"
-                  asp-action="AddItem"
-                  asp-controller="Invoices"
-                  class="row g-2">
+            <form method="post" asp-action="AddItem" asp-controller="Invoices" class="row g-2">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="hoaDonId" value="@Model.HoaDonID" />
+
                 <div class="col-md-7">
                     <select class="form-select" name="monAnId" required>
                         <option value="">-- Chọn món --</option>
                         @foreach (var m in monAn)
                         {
-                            <option value="@m.MonAnID">
-                                @m.TenMon (@m.DonGia.ToString("#,0"))
-                            </option>
+                            <option value="@m.MonAnID">@m.TenMon (@m.DonGia.ToString("#,0"))</option>
                         }
                     </select>
                 </div>
+
                 <div class="col-md-3">
-                    <input class="form-control" type="number" name="soLuong" min="1" value="1" />
+                    <input type="number" class="form-control" name="soLuong" min="1" value="1" />
                 </div>
+
                 <div class="col-md-2">
                     <button class="btn btn-primary w-100">Thêm</button>
                 </div>
@@ -194,23 +168,48 @@ else if (daXacNhan)
         }
     </div>
 
+
+    <!-- ================== CỘT BÊN PHẢI ================== -->
     <div class="col-md-5">
+
+        <!-- ===== CHỌN BÀN PHỤC VỤ ===== -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">Chọn bàn / phòng phục vụ</label>
+
+            <select asp-for="BanPhongID"
+                    class="form-select"
+                    asp-items="@(new SelectList(
+                                            (IEnumerable<Quanlinhahang.Models.BanPhong>)ViewBag.BanPhongs,
+                                            nameof(Quanlinhahang.Models.BanPhong.BanPhongID),
+                                            nameof(Quanlinhahang.Models.BanPhong.TenBanPhong),
+                                            Model.BanPhongID
+                                        ))">
+                <option value="">Không yêu cầu</option>
+            </select>
+        </div>
+
+        <!-- ===== THÔNG TIN THANH TOÁN ===== -->
         <h5>Thông tin thanh toán</h5>
+
         <form method="post" asp-action="Save" asp-controller="Invoices">
             @Html.AntiForgeryToken()
+
             <input type="hidden" asp-for="HoaDonID" />
             <input type="hidden" asp-for="DatBanID" />
             <input type="hidden" asp-for="TrangThai" />
 
             <fieldset @(khongTheSua ? "disabled" : "")>
+
                 <div class="mb-2">
                     <label class="form-label">Giảm giá</label>
-                    <input class="form-control" asp-for="GiamGia" type="number" step="1000" min="0" />
+                    <input asp-for="GiamGia" type="number" min="0" step="1000" class="form-control" />
                 </div>
+
                 <div class="mb-2">
                     <label class="form-label">Điểm sử dụng</label>
-                    <input class="form-control" asp-for="DiemSuDung" type="number" min="0" />
+                    <input asp-for="DiemSuDung" type="number" min="0" class="form-control" />
                 </div>
+
                 <div class="mb-2">
                     <label class="form-label">Hình thức thanh toán</label>
                     <select class="form-select" asp-for="HinhThucThanhToan">
@@ -220,11 +219,13 @@ else if (daXacNhan)
                         <option>QR</option>
                     </select>
                 </div>
+
             </fieldset>
 
             <button class="btn btn-success" @(khongTheSua ? "disabled" : "")>Lưu</button>
-
             <a class="btn btn-secondary" href="@returnUrl">Quay lại</a>
+
         </form>
     </div>
+
 </div>

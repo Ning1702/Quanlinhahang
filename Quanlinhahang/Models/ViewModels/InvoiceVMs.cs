@@ -7,10 +7,6 @@ namespace Quanlinhahang.Models.ViewModels
     {
         public string? Search { get; set; }
 
-        // ===== ĐÃ XÓA 2 DÒNG TRẠNG THÁI CŨ =====
-        // public string? TrangThaiThanhToan { get; set; } 
-        // public string? TrangThaiXacNhan { get; set; }
-
         [DataType(DataType.Date)]
         public DateTime? From { get; set; }
 
@@ -27,12 +23,8 @@ namespace Quanlinhahang.Models.ViewModels
         public string? SoDienThoai { get; set; }
         public decimal TongTien { get; set; }
 
-        // ===== ĐÃ SỬA =====
+        // Trạng thái duy nhất
         public string TrangThai { get; set; } = "";
-
-        // ===== ĐÃ XÓA 2 DÒNG TRẠNG THÁI CŨ =====
-        // public string TrangThaiThanhToan { get; set; } = "";
-        // public string TrangThaiXacNhan { get; set; } = "";
     }
 
     // ✏️ ViewModel chỉnh sửa / tạo hóa đơn
@@ -41,6 +33,11 @@ namespace Quanlinhahang.Models.ViewModels
         public int HoaDonID { get; set; }
         public int DatBanID { get; set; }
 
+        // ⭐ BỔ SUNG QUAN TRỌNG: LƯU BÀN / PHÒNG
+        [Display(Name = "Bàn / Phòng phục vụ")]
+        public int? BanPhongID { get; set; }
+
+        // Các thông tin thanh toán
         [Display(Name = "Giảm giá")]
         public decimal GiamGia { get; set; }
 
@@ -50,17 +47,13 @@ namespace Quanlinhahang.Models.ViewModels
         [Display(Name = "Hình thức thanh toán")]
         public string? HinhThucThanhToan { get; set; }
 
-        // ===== ĐÃ SỬA (Giữ nguyên) =====
+        // Trạng thái hóa đơn
         public string TrangThai { get; set; } = "";
 
-        // ===== ĐÃ XÓA (Giữ nguyên) =====
-        // public string? TrangThaiThanhToan { get; set; }
-        // public string? TrangThaiXacNhan { get; set; } 
-
-
+        // Danh sách món trong hóa đơn
         public List<ItemLine> Items { get; set; } = new List<ItemLine>();
 
-        // Lớp con ItemLine giữ nguyên
+        // Lớp con ItemLine
         public class ItemLine
         {
             public int MonAnID { get; set; }
@@ -68,7 +61,7 @@ namespace Quanlinhahang.Models.ViewModels
             public int SoLuong { get; set; }
             public decimal DonGia { get; set; }
 
-            // Thêm thuộc tính tính toán này để Edit.cshtml dễ sử dụng
+            // Tính tiền tự động
             public decimal ThanhTien => SoLuong * DonGia;
         }
     }

@@ -15,32 +15,33 @@ namespace Quanlinhahang.Controllers
             _db = db;
         }
 
-        // GET: /Invoices
+        // ==============================
+        // LIST HÓA ĐƠN
+        // ==============================
         public async Task<IActionResult> Index([FromQuery] InvoiceFilterVM f, [FromQuery] string status = "")
         {
-            var q = _db.HoaDons
-                .Include(h => h.DatBan)
-                .AsQueryable();
+            var q = _db.HoaDons.Include(h => h.DatBan).AsQueryable();
 
-            var data = from h in q
-                       join d in _db.DatBans on h.DatBanID equals d.DatBanID
-                       join k in _db.KhachHangs on d.KhachHangID equals k.KhachHangID
-                       select new InvoiceRowVM
-                       {
-                           HoaDonID = h.HoaDonID,
-                           NgayLap = h.NgayLap,
-                           KhachHang = k.HoTen,
-                           SoDienThoai = k.SoDienThoai,
-                           TongTien = h.TongTien,
-                           TrangThai = h.TrangThai
-                       };
+            var data =
+                from h in q
+                join d in _db.DatBans on h.DatBanID equals d.DatBanID
+                join k in _db.KhachHangs on d.KhachHangID equals k.KhachHangID
+                select new InvoiceRowVM
+                {
+                    HoaDonID = h.HoaDonID,
+                    NgayLap = h.NgayLap,
+                    KhachHang = k.HoTen,
+                    SoDienThoai = k.SoDienThoai,
+                    TongTien = h.TongTien,
+                    TrangThai = h.TrangThai
+                };
 
             ViewBag.Status = status;
 
             switch (status)
             {
                 case "ChoXacNhan":
-                    data = data.Where(x => (x.TrangThai == "Chờ xác nhận" || x.TrangThai == "Chưa xác nhận"));
+                    data = data.Where(x => x.TrangThai == "Chờ xác nhận" || x.TrangThai == "Chưa xác nhận");
                     break;
                 case "DaXacNhan":
                     data = data.Where(x => x.TrangThai == "Đã xác nhận");
@@ -54,8 +55,6 @@ namespace Quanlinhahang.Controllers
                 case "DaHuy":
                     data = data.Where(x => x.TrangThai == "Đã hủy");
                     break;
-                default:
-                    break;
             }
 
             if (!string.IsNullOrWhiteSpace(f.Search))
@@ -63,18 +62,22 @@ namespace Quanlinhahang.Controllers
                 string s = f.Search.Trim();
                 data = data.Where(x => x.KhachHang.Contains(s) || (x.SoDienThoai ?? "").Contains(s));
             }
-            if (f.From.HasValue) data = data.Where(x => x.NgayLap.Date >= f.From.Value.Date);
-            if (f.To.HasValue) data = data.Where(x => x.NgayLap.Date <= f.To.Value.Date);
 
-            var list = await data
-                .OrderByDescending(x => x.NgayLap)
-                .Take(500)
-                .ToListAsync();
+            if (f.From.HasValue)
+                data = data.Where(x => x.NgayLap.Date >= f.From.Value.Date);
+
+            if (f.To.HasValue)
+                data = data.Where(x => x.NgayLap.Date <= f.To.Value.Date);
+
+            var list = await data.OrderByDescending(x => x.NgayLap).Take(500).ToListAsync();
 
             ViewBag.Filter = f;
             return View(list);
         }
 
+        // ==============================
+        // CHUYỂN SANG PHỤC VỤ
+        // ==============================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> StartServing(int id, string currentStatus)
@@ -82,23 +85,23 @@ namespace Quanlinhahang.Controllers
             var hd = await _db.HoaDons.FindAsync(id);
             if (hd == null) return NotFound();
 
-            if (hd.TrangThai == "Đã thanh toán")
-            {
-                TempData["msg"] = "⚠️ Hóa đơn đã thanh toán, không thể chuyển trạng thái.";
-            }
-            else if (hd.TrangThai == "Đã xác nhận")
+            if (hd.TrangThai == "Đã xác nhận")
             {
                 hd.TrangThai = "Đang phục vụ";
                 await _db.SaveChangesAsync();
-                TempData["msg"] = "✅ Hóa đơn đã chuyển sang trạng thái 'Đang phục vụ'.";
+                TempData["msg"] = "✅ Đã chuyển sang trạng thái phục vụ.";
             }
             else
             {
-                TempData["msg"] = "⚠️ Trạng thái hóa đơn không phù hợp để phục vụ.";
+                TempData["msg"] = "⚠️ Không thể phục vụ hóa đơn này.";
             }
+
             return RedirectToAction(nameof(Index), new { status = currentStatus });
         }
 
+        // ==============================
+        // XÁC NHẬN HÓA ĐƠN
+        // ==============================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmInvoice(int id, string currentStatus)
@@ -106,35 +109,23 @@ namespace Quanlinhahang.Controllers
             var hd = await _db.HoaDons.FindAsync(id);
             if (hd == null) return NotFound();
 
-            if (hd.TrangThai == "Đã thanh toán")
-            {
-                TempData["msg"] = "⚠️ Hóa đơn đã thanh toán, không thể xác nhận.";
-                return RedirectToAction(nameof(Index), new { status = currentStatus });
-            }
-
-            if (hd.TrangThai == null
-                || hd.TrangThai == "Chờ xác nhận"
-                || hd.TrangThai == "Chưa xác nhận")
+            if (hd.TrangThai == "Chờ xác nhận" || hd.TrangThai == "Chưa xác nhận")
             {
                 hd.TrangThai = "Đã xác nhận";
                 await _db.SaveChangesAsync();
                 TempData["msg"] = "✅ Hóa đơn đã được xác nhận.";
             }
-            else if (hd.TrangThai == "Đã xác nhận")
-            {
-                TempData["msg"] = "⚠️ Hóa đơn này đã được xác nhận rồi.";
-            }
-            else if (hd.TrangThai == "Đã hủy")
-            {
-                TempData["msg"] = "⚠️ Hóa đơn đã bị hủy, không thể xác nhận lại.";
-            }
             else
             {
-                TempData["msg"] = "⚠️ Trạng thái hóa đơn không phù hợp để xác nhận.";
+                TempData["msg"] = "⚠️ Không thể xác nhận hóa đơn này.";
             }
+
             return RedirectToAction(nameof(Index), new { status = currentStatus });
         }
 
+        // ==============================
+        // HỦY HÓA ĐƠN
+        // ==============================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> HuyHoaDon(int id, string currentStatus)
@@ -142,74 +133,54 @@ namespace Quanlinhahang.Controllers
             var hd = await _db.HoaDons.FindAsync(id);
             if (hd == null) return NotFound();
 
-            if (hd.TrangThai == "Đã thanh toán")
-            {
-                TempData["msg"] = "⚠️ Hóa đơn đã thanh toán, không thể hủy.";
-                return RedirectToAction(nameof(Index), new { status = currentStatus });
-            }
-
-            if (hd.TrangThai == "Đã xác nhận"
-                || hd.TrangThai == "Chờ xác nhận"
-                || hd.TrangThai == "Chưa xác nhận"
-                || hd.TrangThai == "Đang phục vụ")
+            if (hd.TrangThai != "Đã thanh toán")
             {
                 hd.TrangThai = "Đã hủy";
                 await _db.SaveChangesAsync();
-                TempData["msg"] = "✅ Hóa đơn đã được hủy.";
+                TempData["msg"] = "🗑 Hóa đơn đã bị hủy.";
             }
-            else
-            {
-                TempData["msg"] = "⚠️ Trạng thái hóa đơn không phù hợp để hủy.";
-            }
+            else TempData["msg"] = "⚠️ Không thể hủy hóa đơn đã thanh toán.";
+
             return RedirectToAction(nameof(Index), new { status = currentStatus });
         }
 
+        // ==============================
+        // THANH TOÁN
+        // ==============================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ThanhToan(int id, string currentStatus)
         {
-            var hd = await _db.HoaDons
-                .Include(h => h.ChiTiet)
-                .FirstOrDefaultAsync(h => h.HoaDonID == id);
-
+            var hd = await _db.HoaDons.Include(h => h.ChiTiet).FirstOrDefaultAsync(h => h.HoaDonID == id);
             if (hd == null) return NotFound();
 
-            if (hd.TrangThai == "Đã thanh toán")
-            {
-                TempData["msg"] = "⚠️ Hóa đơn này đã thanh toán rồi.";
-            }
-            else if (hd.TrangThai == "Đang phục vụ")
+            if (hd.TrangThai == "Đang phục vụ")
             {
                 await UpdateTongTienAsync(hd);
                 hd.TrangThai = "Đã thanh toán";
                 await _db.SaveChangesAsync();
-                TempData["msg"] = "✅ Hóa đơn đã được thanh toán.";
+                TempData["msg"] = "💰 Đã thanh toán.";
             }
-            else
-            {
-                TempData["msg"] = "⚠️ Hóa đơn phải ở trạng thái 'Đang phục vụ' mới có thể thanh toán.";
-            }
+            else TempData["msg"] = "⚠️ Chỉ có thể thanh toán hóa đơn đang phục vụ.";
 
             return RedirectToAction(nameof(Index), new { status = currentStatus });
         }
 
-        // GET: /Invoices/Create
+        // ==============================
+        // TẠO HÓA ĐƠN
+        // ==============================
         public async Task<IActionResult> Create(int? datBanId)
         {
-            if (datBanId == null)
-                return BadRequest("Thiếu DatBanID");
+            if (datBanId == null) return BadRequest("Thiếu DatBanID");
 
-            var datBan = await _db.DatBans.FirstOrDefaultAsync(x => x.DatBanID == datBanId);
-            if (datBan == null) return NotFound("Không tìm thấy lịch đặt.");
+            var datBan = await _db.DatBans.FindAsync(datBanId);
+            if (datBan == null) return NotFound();
 
             var hd = new HoaDon
             {
                 DatBanID = datBan.DatBanID,
                 NgayLap = DateTime.Now,
                 TongTien = 0,
-                GiamGia = 0,
-                DiemCong = 0,
-                DiemSuDung = 0,
                 TrangThai = "Chờ xác nhận"
             };
 
@@ -219,13 +190,16 @@ namespace Quanlinhahang.Controllers
             return RedirectToAction(nameof(Edit), new { id = hd.HoaDonID });
         }
 
-        // GET: /Invoices/Edit/5
+        // ==============================
+        // EDIT HÓA ĐƠN
+        // ==============================
         public async Task<IActionResult> Edit(int id)
         {
             ViewBag.RefererUrl = Request.Headers["Referer"].ToString();
 
             var hd = await _db.HoaDons
                 .Include(h => h.ChiTiet).ThenInclude(ct => ct.MonAn)
+                .Include(h => h.DatBan)
                 .FirstOrDefaultAsync(h => h.HoaDonID == id);
 
             if (hd == null) return NotFound();
@@ -234,6 +208,7 @@ namespace Quanlinhahang.Controllers
             {
                 HoaDonID = hd.HoaDonID,
                 DatBanID = hd.DatBanID,
+                BanPhongID = hd.DatBan?.BanPhongID,
                 GiamGia = hd.GiamGia,
                 DiemSuDung = hd.DiemSuDung,
                 HinhThucThanhToan = hd.HinhThucThanhToan,
@@ -241,37 +216,43 @@ namespace Quanlinhahang.Controllers
                 Items = hd.ChiTiet.Select(ct => new InvoiceEditVM.ItemLine
                 {
                     MonAnID = ct.MonAnID,
-                    TenMon = ct.MonAn?.TenMon ?? "",
+                    TenMon = ct.MonAn.TenMon,
                     SoLuong = ct.SoLuong,
                     DonGia = ct.DonGia
                 }).ToList()
             };
 
-            ViewBag.MonAn = await _db.MonAns
-                .Where(m => m.TrangThai == "Còn bán")
-                .OrderBy(m => m.TenMon)
-                .ToListAsync();
-
-            ViewBag.TrangThai = hd.TrangThai ?? "Chờ xác nhận";
+            ViewBag.MonAn = await _db.MonAns.Where(m => m.TrangThai == "Còn bán").ToListAsync();
+            ViewBag.BanPhongs = await _db.BanPhongs.ToListAsync();
+            ViewBag.TrangThai = hd.TrangThai;
             ViewBag.DaThanhToan = hd.TrangThai == "Đã thanh toán";
 
             return View(vm);
         }
 
+        // ==============================
+        // SAVE HÓA ĐƠN
+        // ==============================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Save(InvoiceEditVM vm)
         {
-            var hd = await _db.HoaDons
-                .Include(h => h.ChiTiet)
+            var hd = await _db.HoaDons.Include(h => h.DatBan).Include(h => h.ChiTiet)
                 .FirstOrDefaultAsync(h => h.HoaDonID == vm.HoaDonID);
 
             if (hd == null) return NotFound();
 
             if (hd.TrangThai == "Đã thanh toán")
             {
-                TempData["msg"] = "⚠️ Hóa đơn đã thanh toán, không thể chỉnh sửa.";
+                TempData["msg"] = "⚠️ Không thể sửa hóa đơn đã thanh toán.";
                 return RedirectToAction(nameof(Edit), new { id = hd.HoaDonID });
+            }
+
+            // Lưu bàn
+            var datBan = await _db.DatBans.FindAsync(hd.DatBanID);
+            if (datBan != null)
+            {
+                datBan.BanPhongID = vm.BanPhongID;
             }
 
             hd.GiamGia = vm.GiamGia;
@@ -285,182 +266,149 @@ namespace Quanlinhahang.Controllers
             return RedirectToAction(nameof(Edit), new { id = hd.HoaDonID });
         }
 
+        // ==============================
+        // THÊM MÓN
+        // ==============================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddItem(int hoaDonId, int monAnId, int soLuong)
         {
             if (soLuong <= 0) soLuong = 1;
 
-            var hd = await _db.HoaDons
-                .Include(h => h.ChiTiet)
+            var hd = await _db.HoaDons.Include(h => h.ChiTiet)
                 .FirstOrDefaultAsync(h => h.HoaDonID == hoaDonId);
 
             if (hd == null) return NotFound();
 
             if (hd.TrangThai == "Đã thanh toán")
             {
-                TempData["msg"] = "⚠️ Hóa đơn đã thanh toán, không thể thêm món.";
+                TempData["msg"] = "⚠️ Không thể thêm món vào hóa đơn đã thanh toán.";
                 return RedirectToAction(nameof(Edit), new { id = hoaDonId });
             }
 
             var mon = await _db.MonAns.FindAsync(monAnId);
-            if (mon == null)
-            {
-                TempData["msg"] = "⚠️ Không tìm thấy món ăn.";
-                return RedirectToAction(nameof(Edit), new { id = hoaDonId });
-            }
+            if (mon == null) return NotFound();
 
             var ct = hd.ChiTiet.FirstOrDefault(x => x.MonAnID == monAnId);
             if (ct != null)
             {
                 ct.SoLuong += soLuong;
                 ct.ThanhTien = ct.SoLuong * ct.DonGia;
-                _db.ChiTietHoaDons.Update(ct);
             }
             else
             {
-                var newCt = new ChiTietHoaDon
+                _db.ChiTietHoaDons.Add(new ChiTietHoaDon
                 {
                     HoaDonID = hoaDonId,
                     MonAnID = monAnId,
                     SoLuong = soLuong,
                     DonGia = mon.DonGia,
-                    ThanhTien = mon.DonGia * soLuong
-                };
-                _db.ChiTietHoaDons.Add(newCt);
+                    ThanhTien = soLuong * mon.DonGia
+                });
             }
 
             await UpdateTongTienAsync(hd);
             await _db.SaveChangesAsync();
 
-            TempData["msg"] = "✅ Đã thêm món vào hóa đơn.";
+            TempData["msg"] = "🍽 Đã thêm món vào hóa đơn.";
             return RedirectToAction(nameof(Edit), new { id = hoaDonId });
         }
 
+        // ==============================
+        // XÓA MÓN / GIẢM SỐ LƯỢNG
+        // ==============================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveItem(int hoaDonId, int monAnId, bool removeAll = false)
         {
-            var hd = await _db.HoaDons
-                .Include(h => h.ChiTiet)
+            var hd = await _db.HoaDons.Include(h => h.ChiTiet)
                 .FirstOrDefaultAsync(h => h.HoaDonID == hoaDonId);
 
             if (hd == null) return NotFound();
 
-            if (hd.TrangThai == "Đã thanh toán")
-            {
-                TempData["msg"] = "⚠️ Hóa đơn đã thanh toán, không thể chỉnh sửa món.";
+            var ct = hd.ChiTiet.FirstOrDefault(x => x.MonAnID == monAnId);
+            if (ct == null)
                 return RedirectToAction(nameof(Edit), new { id = hoaDonId });
-            }
 
-            var ct = await _db.ChiTietHoaDons
-                .FirstOrDefaultAsync(x => x.HoaDonID == hoaDonId && x.MonAnID == monAnId);
-
-            if (ct != null)
+            if (removeAll || ct.SoLuong <= 1)
+                _db.ChiTietHoaDons.Remove(ct);
+            else
             {
-                if (removeAll || ct.SoLuong <= 1)
-                {
-                    _db.ChiTietHoaDons.Remove(ct);
-                    TempData["msg"] = "✅ Đã xóa món khỏi hóa đơn.";
-                }
-                else
-                {
-                    ct.SoLuong -= 1;
-                    ct.ThanhTien = ct.SoLuong * ct.DonGia;
-                    _db.ChiTietHoaDons.Update(ct);
-                    TempData["msg"] = "✅ Đã giảm bớt 1 phần món trong hóa đơn.";
-                }
-
-                await UpdateTongTienAsync(hd);
-                await _db.SaveChangesAsync();
+                ct.SoLuong -= 1;
+                ct.ThanhTien = ct.SoLuong * ct.DonGia;
             }
 
+            await UpdateTongTienAsync(hd);
+            await _db.SaveChangesAsync();
+
+            TempData["msg"] = "🗑 Đã cập nhật món.";
             return RedirectToAction(nameof(Edit), new { id = hoaDonId });
         }
 
+        // ==============================
+        // UPDATE TONG TIEN
+        // ==============================
         private Task UpdateTongTienAsync(HoaDon hd)
         {
-            if (hd == null) return Task.CompletedTask;
-            if (hd.ChiTiet == null) return Task.CompletedTask; // Thêm kiểm tra null cho ChiTiet
-
-            var subTotal = hd.ChiTiet.Sum(x => x.ThanhTien);
-            var vat = subTotal * 0.1m;
-            var finalTotal = subTotal + vat - hd.GiamGia - hd.DiemSuDung;
-
-            if (finalTotal < 0) finalTotal = 0;
-
-            hd.TongTien = finalTotal;
+            var sub = hd.ChiTiet.Sum(x => x.ThanhTien);
+            var vat = sub * 0.1m;
+            var final = sub + vat - hd.GiamGia - hd.DiemSuDung;
+            if (final < 0) final = 0;
+            hd.TongTien = final;
 
             return Task.CompletedTask;
         }
 
-        // ===== ĐÃ SỬA: Thêm ViewBag.RefererUrl =====
-        // GET: /Invoices/Details/5
+        // ==============================
+        // DETAILS
+        // ==============================
         public async Task<IActionResult> Details(int id)
         {
-            ViewBag.RefererUrl = Request.Headers["Referer"].ToString();
-
             var hd = await _db.HoaDons
                 .Include(h => h.DatBan)
                 .Include(h => h.ChiTiet).ThenInclude(ct => ct.MonAn)
                 .FirstOrDefaultAsync(h => h.HoaDonID == id);
 
             if (hd == null) return NotFound();
-
             return View(hd);
         }
 
-        // ===== ĐÃ SỬA: Thêm ViewBag.RefererUrl =====
-        // GET: /Invoices/Print/5
+        // ==============================
+        // PRINT
+        // ==============================
         public async Task<IActionResult> Print(int id)
         {
-            ViewBag.RefererUrl = Request.Headers["Referer"].ToString();
-
             var hd = await _db.HoaDons
                 .Include(h => h.DatBan)
                 .Include(h => h.ChiTiet).ThenInclude(ct => ct.MonAn)
                 .FirstOrDefaultAsync(h => h.HoaDonID == id);
 
             if (hd == null) return NotFound();
-
             return View(hd);
         }
 
-        // ===== ĐÃ THÊM: Hàm Delete (GET) =====
-        // GET: Invoices/Delete/5
+        // ==============================
+        // DELETE
+        // ==============================
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            ViewBag.RefererUrl = Request.Headers["Referer"].ToString();
+            var hd = await _db.HoaDons.Include(h => h.DatBan)
+                .FirstOrDefaultAsync(h => h.HoaDonID == id);
 
-            var hoaDon = await _db.HoaDons
-                .Include(h => h.DatBan)
-                .FirstOrDefaultAsync(m => m.HoaDonID == id);
-
-            if (hoaDon == null)
-            {
-                return NotFound();
-            }
-
-            return View(hoaDon);
+            if (hd == null) return NotFound();
+            return View(hd);
         }
 
-        // POST: Invoices/Delete/5
-        // (Hàm Delete (POST) của bạn có thể đã tồn tại,
-        // nếu chưa có, bạn có thể thêm nó vào)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var hoaDon = await _db.HoaDons.FindAsync(id);
-            if (hoaDon != null)
+            var hd = await _db.HoaDons.FindAsync(id);
+            if (hd != null)
             {
-                // Bạn có thể muốn kiểm tra logic (vd: không cho xóa nếu đã thanh toán)
-                _db.HoaDons.Remove(hoaDon);
+                _db.HoaDons.Remove(hd);
                 await _db.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
