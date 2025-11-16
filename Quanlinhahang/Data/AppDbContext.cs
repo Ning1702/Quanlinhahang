@@ -11,6 +11,7 @@ namespace Quanlinhahang.Data
         public DbSet<KhachHang> KhachHangs => Set<KhachHang>();
         public DbSet<DatBan> DatBans => Set<DatBan>();
         public DbSet<BanPhong> BanPhongs => Set<BanPhong>();
+        public DbSet<LoaiBanPhong> LoaiBanPhongs => Set<LoaiBanPhong>();
         public DbSet<KhungGio> KhungGios => Set<KhungGio>();
         public DbSet<HoaDon> HoaDons => Set<HoaDon>();
         public DbSet<ChiTietHoaDon> ChiTietHoaDons => Set<ChiTietHoaDon>();
@@ -56,6 +57,12 @@ namespace Quanlinhahang.Data
               .WithMany()
               .HasForeignKey(db => db.BanPhongID)
               .OnDelete(DeleteBehavior.Restrict);
+
+            mb.Entity<BanPhong>()
+                .HasOne(bp => bp.LoaiBanPhong)
+                .WithMany(lp => lp.BanPhongs)
+                .HasForeignKey(bp => bp.LoaiBanPhongID)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // === ĐẶT BÀN – KHUNG GIỜ ===
             mb.Entity<DatBan>()

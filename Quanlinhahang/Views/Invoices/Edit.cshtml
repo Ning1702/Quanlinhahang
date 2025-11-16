@@ -176,16 +176,21 @@ else if (daXacNhan)
         <div class="mb-3">
             <label class="form-label fw-bold">Chọn bàn / phòng phục vụ</label>
 
-            <select asp-for="BanPhongID"
-                    class="form-select"
-                    asp-items="@(new SelectList(
-                                            (IEnumerable<Quanlinhahang.Models.BanPhong>)ViewBag.BanPhongs,
-                                            nameof(Quanlinhahang.Models.BanPhong.BanPhongID),
-                                            nameof(Quanlinhahang.Models.BanPhong.TenBanPhong),
-                                            Model.BanPhongID
-                                        ))">
+            <select asp-for="BanPhongID" class="form-select">
                 <option value="">Không yêu cầu</option>
+
+                @foreach (var b in (List<Quanlinhahang.Models.BanPhong>)ViewBag.BanPhongs)
+                {
+                    <option value="@b.BanPhongID"
+                            selected="@(Model.BanPhongID == b.BanPhongID)">
+                        @b.TenBanPhong
+                    </option>
+
+                }
             </select>
+
+
+            <input type="hidden" asp-for="BanPhongID" />
         </div>
 
         <!-- ===== THÔNG TIN THANH TOÁN ===== -->
@@ -198,7 +203,7 @@ else if (daXacNhan)
             <input type="hidden" asp-for="DatBanID" />
             <input type="hidden" asp-for="TrangThai" />
 
-            <fieldset @(khongTheSua ? "disabled" : "")>
+            <fieldset>
 
                 <div class="mb-2">
                     <label class="form-label">Giảm giá</label>

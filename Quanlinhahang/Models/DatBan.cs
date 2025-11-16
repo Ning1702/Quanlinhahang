@@ -16,7 +16,6 @@ namespace Quanlinhahang.Models
         public string TrangThai { get; set; } = "Chờ xác nhận";
         public DateTime NgayTao { get; set; }
 
-        // ===== Navigation =====
         public KhachHang? KhachHang { get; set; }
         public BanPhong? BanPhong { get; set; }
         public KhungGio? KhungGio { get; set; }

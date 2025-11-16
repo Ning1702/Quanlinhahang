@@ -6,7 +6,7 @@
     var returnUrl = ViewBag.RefererUrl as string;
     if (string.IsNullOrEmpty(returnUrl))
     {
-        returnUrl = Url.Action("Index"); // Fallback nếu không có Referer
+        returnUrl = Url.Action("Index");
     }
 }
 
@@ -29,6 +29,13 @@
 
             <dt class="col-sm-5">Mã Đặt bàn</dt>
             <dd class="col-sm-7">@Model.DatBan?.DatBanID</dd>
+
+            <dt class="col-sm-5">Loại bàn / phòng</dt>
+            <dd class="col-sm-7">
+                @(Model.DatBan?.BanPhong?.LoaiBanPhong != null
+                                ? Model.DatBan.BanPhong.LoaiBanPhong.TenLoai
+                                : "Không yêu cầu")
+            </dd>
 
             <dt class="col-sm-5">Nhân viên</dt>
             <dd class="col-sm-7">@Html.DisplayFor(model => model.TaiKhoanID)</dd>

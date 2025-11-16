@@ -33,6 +33,7 @@ namespace Quanlinhahang.Models.ViewModels
         public int HoaDonID { get; set; }
         public int DatBanID { get; set; }
 
+
         // ⭐ BỔ SUNG QUAN TRỌNG: LƯU BÀN / PHÒNG
         [Display(Name = "Bàn / Phòng phục vụ")]
         public int? BanPhongID { get; set; }

@@ -195,7 +195,7 @@ namespace Quanlinhahang.Controllers
         // ==============================
         public async Task<IActionResult> Edit(int id)
         {
-            ViewBag.RefererUrl = Request.Headers["Referer"].ToString();
+            ViewBag.ReturnUrl = Request.Headers["Referer"].ToString();
 
             var hd = await _db.HoaDons
                 .Include(h => h.ChiTiet).ThenInclude(ct => ct.MonAn)
@@ -235,25 +235,18 @@ namespace Quanlinhahang.Controllers
         // ==============================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Save(InvoiceEditVM vm)
+        public async Task<IActionResult> Save(InvoiceEditVM vm, string returnUrl)
         {
-            var hd = await _db.HoaDons.Include(h => h.DatBan).Include(h => h.ChiTiet)
+            var hd = await _db.HoaDons
+                .Include(h => h.DatBan)
+                .Include(h => h.ChiTiet)
                 .FirstOrDefaultAsync(h => h.HoaDonID == vm.HoaDonID);
 
             if (hd == null) return NotFound();
 
-            if (hd.TrangThai == "Đã thanh toán")
-            {
-                TempData["msg"] = "⚠️ Không thể sửa hóa đơn đã thanh toán.";
-                return RedirectToAction(nameof(Edit), new { id = hd.HoaDonID });
-            }
-
-            // Lưu bàn
-            var datBan = await _db.DatBans.FindAsync(hd.DatBanID);
-            if (datBan != null)
-            {
-                datBan.BanPhongID = vm.BanPhongID;
-            }
+            // Lưu loại bàn
+            if (hd.DatBan != null)
+                hd.DatBan.BanPhongID = vm.BanPhongID;
 
             hd.GiamGia = vm.GiamGia;
             hd.DiemSuDung = vm.DiemSuDung;
@@ -262,12 +255,17 @@ namespace Quanlinhahang.Controllers
             await UpdateTongTienAsync(hd);
             await _db.SaveChangesAsync();
 
-            TempData["msg"] = "💾 Đã lưu hóa đơn.";
-            return RedirectToAction(nameof(Edit), new { id = hd.HoaDonID });
+            TempData["msg"] = "Đã lưu hóa đơn.";
+
+            if (!string.IsNullOrEmpty(returnUrl))
+                return Redirect(returnUrl);
+
+            return RedirectToAction(nameof(Index));
         }
 
+
         // ==============================
-        // THÊM MÓN
+        // ADD ITEM
         // ==============================
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -315,7 +313,7 @@ namespace Quanlinhahang.Controllers
         }
 
         // ==============================
-        // XÓA MÓN / GIẢM SỐ LƯỢNG
+        // REMOVE ITEM
         // ==============================
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -346,7 +344,7 @@ namespace Quanlinhahang.Controllers
         }
 
         // ==============================
-        // UPDATE TONG TIEN
+        // UPDATE TOTAL
         // ==============================
         private Task UpdateTongTienAsync(HoaDon hd)
         {
@@ -360,16 +358,20 @@ namespace Quanlinhahang.Controllers
         }
 
         // ==============================
-        // DETAILS
+        // DETAILS (HIỂN THỊ LOẠI BÀN)
         // ==============================
         public async Task<IActionResult> Details(int id)
         {
             var hd = await _db.HoaDons
                 .Include(h => h.DatBan)
-                .Include(h => h.ChiTiet).ThenInclude(ct => ct.MonAn)
+                    .ThenInclude(db => db.BanPhong)
+                        .ThenInclude(bp => bp.LoaiBanPhong)
+                .Include(h => h.ChiTiet)
+                    .ThenInclude(ct => ct.MonAn)
                 .FirstOrDefaultAsync(h => h.HoaDonID == id);
 
             if (hd == null) return NotFound();
+
             return View(hd);
         }
 
