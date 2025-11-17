@@ -21,11 +21,13 @@ namespace Quanlinhahang.Models.ViewModels
         public DateTime NgayLap { get; set; }
         public string KhachHang { get; set; } = "";
         public string? SoDienThoai { get; set; }
-        public decimal TongTien { get; set; }
-
-        // Trạng thái duy nhất
-        public string TrangThai { get; set; } = "";
+        public decimal ThanhTien { get; set; }
+        public string BanPhong { get; set; } = "";
+        public string LoaiBanPhong { get; set; } = "";
+        public int TrangThaiID { get; set; }
+        public string TrangThaiTen { get; set; } = "";
     }
+
 
     // ✏️ ViewModel chỉnh sửa / tạo hóa đơn
     public class InvoiceEditVM

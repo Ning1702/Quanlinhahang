@@ -14,6 +14,7 @@ namespace Quanlinhahang.Data
         public DbSet<LoaiBanPhong> LoaiBanPhongs => Set<LoaiBanPhong>();
         public DbSet<KhungGio> KhungGios => Set<KhungGio>();
         public DbSet<HoaDon> HoaDons => Set<HoaDon>();
+        public DbSet<TrangThaiHoaDon> TrangThaiHoaDons { get; set; }
         public DbSet<ChiTietHoaDon> ChiTietHoaDons => Set<ChiTietHoaDon>();
         public DbSet<MonAn> MonAns => Set<MonAn>();
 
@@ -27,7 +28,7 @@ namespace Quanlinhahang.Data
 
             mb.Entity<ChiTietHoaDon>()
               .HasOne(ct => ct.HoaDon)
-              .WithMany(h => h.ChiTiet)
+              .WithMany(h => h.ChiTietHoaDons)
               .HasForeignKey(ct => ct.HoaDonID)
               .OnDelete(DeleteBehavior.Cascade);
 
@@ -40,8 +41,23 @@ namespace Quanlinhahang.Data
             // === HÓA ĐƠN – ĐẶT BÀN ===
             mb.Entity<HoaDon>()
               .HasOne(h => h.DatBan)
-              .WithMany()
+              .WithMany(db => db.HoaDons)
               .HasForeignKey(h => h.DatBanID)
+              .OnDelete(DeleteBehavior.Restrict);
+
+            // === HÓA ĐƠN – BÀN PHÒNG ===
+            mb.Entity<HoaDon>()
+              .HasOne(h => h.BanPhong)
+              .WithMany(bp => bp.HoaDons)      // ✔ ĐÚNG
+              .HasForeignKey(h => h.BanPhongID)
+              .OnDelete(DeleteBehavior.Restrict);
+
+
+            // === HÓA ĐƠN – TRẠNG THÁI ===
+            mb.Entity<HoaDon>()
+              .HasOne(h => h.TrangThai)
+              .WithMany(t => t.HoaDons)
+              .HasForeignKey(h => h.TrangThaiID)
               .OnDelete(DeleteBehavior.Restrict);
 
             // === ĐẶT BÀN – KHÁCH HÀNG ===
@@ -54,7 +70,7 @@ namespace Quanlinhahang.Data
             // === ĐẶT BÀN – BÀN PHÒNG ===
             mb.Entity<DatBan>()
               .HasOne(db => db.BanPhong)
-              .WithMany()
+              .WithMany(bp => bp.DatBans)
               .HasForeignKey(db => db.BanPhongID)
               .OnDelete(DeleteBehavior.Restrict);
 

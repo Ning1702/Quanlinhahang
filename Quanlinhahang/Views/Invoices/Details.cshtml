@@ -2,12 +2,7 @@
 
 @{
     ViewData["Title"] = $"Hóa Đơn #{Model.HoaDonID}";
-
-    var returnUrl = ViewBag.RefererUrl as string;
-    if (string.IsNullOrEmpty(returnUrl))
-    {
-        returnUrl = Url.Action("Index");
-    }
+    var returnUrl = ViewBag.ReturnUrl as string ?? Url.Action("Index");
 }
 
 <h2 class="mt-3">Hóa Đơn #@Model.HoaDonID</h2>
@@ -19,13 +14,13 @@
         <dl class="row">
 
             <dt class="col-sm-5">Ngày lập</dt>
-            <dd class="col-sm-7">@Html.DisplayFor(model => model.NgayLap)</dd>
+            <dd class="col-sm-7">@Model.NgayLap</dd>
 
             <dt class="col-sm-5">Trạng thái</dt>
-            <dd class="col-sm-7">@Html.DisplayFor(model => model.TrangThai)</dd>
+            <dd class="col-sm-7">@Model.TrangThai?.TenTrangThai</dd>
 
             <dt class="col-sm-5">Hình thức thanh toán</dt>
-            <dd class="col-sm-7">@Html.DisplayFor(model => model.HinhThucThanhToan)</dd>
+            <dd class="col-sm-7">@Model.HinhThucThanhToan</dd>
 
             <dt class="col-sm-5">Mã Đặt bàn</dt>
             <dd class="col-sm-7">@Model.DatBan?.DatBanID</dd>
@@ -38,7 +33,7 @@
             </dd>
 
             <dt class="col-sm-5">Nhân viên</dt>
-            <dd class="col-sm-7">@Html.DisplayFor(model => model.TaiKhoanID)</dd>
+            <dd class="col-sm-7">@Model.TaiKhoanID</dd>
 
         </dl>
     </div>
@@ -55,7 +50,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model.ChiTiet)
+                @foreach (var item in Model.ChiTietHoaDons)
                 {
                     <tr>
                         <td>@item.MonAn?.TenMon</td>
@@ -68,13 +63,13 @@
 
             <tfoot class="table-light">
                 @{
-                    var subTotal = Model.ChiTiet.Sum(i => i.ThanhTien);
+                    var subTotal = Model.ChiTietHoaDons.Sum(i => i.ThanhTien);
                     var vat = subTotal * 0.1m;
                     var finalTotal = (subTotal + vat) - Model.GiamGia - Model.DiemSuDung;
-                    if (finalTotal < 0) { finalTotal = 0; }
+                    if (finalTotal < 0) finalTotal = 0;
                 }
                 <tr>
-                    <td colspan="3" class="text-end">Tổng cộng (Tạm tính):</td>
+                    <td colspan="3" class="text-end">Tạm tính:</td>
                     <td class="text-end">@subTotal.ToString("#,##0")</td>
                 </tr>
                 <tr>
@@ -86,19 +81,19 @@
                 {
                     <tr>
                         <td colspan="3" class="text-end text-danger">Giảm giá:</td>
-                        <td class="text-end text-danger">- @Model.GiamGia.ToString("#,##0")</td>
+                        <td class="text-end text-danger">-@Model.GiamGia.ToString("#,##0")</td>
                     </tr>
                 }
                 @if (Model.DiemSuDung > 0)
                 {
                     <tr>
                         <td colspan="3" class="text-end text-danger">Dùng điểm:</td>
-                        <td class="text-end text-danger">- @Model.DiemSuDung.ToString("#,##0")</td>
+                        <td class="text-end text-danger">-@Model.DiemSuDung.ToString("#,##0")</td>
                     </tr>
                 }
 
                 <tr class="h5">
-                    <td colspan="3" class="text-end"><strong>Thành tiền (Khách trả):</strong></td>
+                    <td colspan="3" class="text-end"><strong>Thành tiền:</strong></td>
                     <td class="text-end"><strong>@finalTotal.ToString("#,##0")</strong></td>
                 </tr>
             </tfoot>
@@ -109,5 +104,9 @@
 <hr />
 
 <div class="text-end">
-    <a href="@returnUrl" class="btn btn-secondary">Quay lại</a>
+    <a class="btn btn-secondary"
+       href="@Url.Action("Index", new { status = ViewBag.Status })">
+        Quay lại
+    </a>
+
 </div>

@@ -1,17 +1,23 @@
 ﻿@model Quanlinhahang.Models.ViewModels.InvoiceEditVM
 @using Microsoft.AspNetCore.Mvc.Rendering
+@using Quanlinhahang.Models
 
 @{
     var monAn = (List<Quanlinhahang.Models.MonAn>)ViewBag.MonAn;
     ViewData["Title"] = $"Sửa hóa đơn #{Model.HoaDonID}";
 
     bool daThanhToan = (bool)(ViewBag.DaThanhToan ?? false);
-    bool daXacNhan = (ViewBag.TrangThai == "Đã xác nhận");
+
+    string trangThaiTen = ViewBag.TrangThai as string;
+    bool daXacNhan = (trangThaiTen == "Đã xác nhận");
     bool khongTheSua = daThanhToan;
 
-    var returnUrl = ViewBag.RefererUrl as string;
-    if (string.IsNullOrEmpty(returnUrl))
-        returnUrl = Url.Action("Index");
+    int status = ViewBag.Status ?? 0;   // <-- LẤY TRẠNG THÁI HIỆN TẠI
+
+    // TÌM BANPHONG ĐÃ CHỌN ĐỂ HIỂN THỊ TÊN
+    var banPhongDaChon = ((List<BanPhong>)ViewBag.BanPhongs)
+                            .FirstOrDefault(b => b.BanPhongID == Model.BanPhongID);
+    var tenBanDaChon = banPhongDaChon != null ? banPhongDaChon.TenBanPhong : "Không yêu cầu";
 }
 
 <h2 class="mt-3">Hóa đơn #@Model.HoaDonID</h2>
@@ -32,7 +38,6 @@ else if (daXacNhan)
 
 <div class="row">
 
-    <!-- ================== DANH SÁCH MÓN ================== -->
     <div class="col-md-7">
         <h5>Danh sách món</h5>
 
@@ -168,46 +173,44 @@ else if (daXacNhan)
         }
     </div>
 
-
-    <!-- ================== CỘT BÊN PHẢI ================== -->
     <div class="col-md-5">
 
-        <!-- ===== CHỌN BÀN PHỤC VỤ ===== -->
-        <div class="mb-3">
-            <label class="form-label fw-bold">Chọn bàn / phòng phục vụ</label>
-
-            <select asp-for="BanPhongID" class="form-select">
-                <option value="">Không yêu cầu</option>
-
-                @foreach (var b in (List<Quanlinhahang.Models.BanPhong>)ViewBag.BanPhongs)
-                {
-                    <option value="@b.BanPhongID"
-                            selected="@(Model.BanPhongID == b.BanPhongID)">
-                        @b.TenBanPhong
-                    </option>
-
-                }
-            </select>
-
-
-            <input type="hidden" asp-for="BanPhongID" />
-        </div>
-
-        <!-- ===== THÔNG TIN THANH TOÁN ===== -->
         <h5>Thông tin thanh toán</h5>
-
         <form method="post" asp-action="Save" asp-controller="Invoices">
             @Html.AntiForgeryToken()
 
             <input type="hidden" asp-for="HoaDonID" />
             <input type="hidden" asp-for="DatBanID" />
-            <input type="hidden" asp-for="TrangThai" />
+
+            <input type="hidden" asp-for="BanPhongID" id="selectedBanPhongID" />
+
+            <!-- GIỮ STATUS ĐỂ QUAY LẠI ĐÚNG TAB -->
+            <input type="hidden" name="status" value="@status" />
 
             <fieldset>
 
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Chọn bàn / phòng phục vụ</label>
+                    <div class="input-group">
+                        <input type="text" id="selectedBanPhongName" class="form-control" value="@tenBanDaChon" readonly
+                               placeholder="Chưa chọn bàn" />
+
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#banPhongModal"
+                                @(khongTheSua ? "disabled" : "")>
+                            Chọn
+                        </button>
+                    </div>
+                </div>
+
                 <div class="mb-2">
                     <label class="form-label">Giảm giá</label>
-                    <input asp-for="GiamGia" type="number" min="0" step="1000" class="form-control" />
+                    <input asp-for="GiamGia"
+                           type="number"
+                           min="0"
+                           step="1000"
+                           class="form-control"
+                           value="@(Model.GiamGia.ToString("0"))" />
+
                 </div>
 
                 <div class="mb-2">
@@ -228,9 +231,187 @@ else if (daXacNhan)
             </fieldset>
 
             <button class="btn btn-success" @(khongTheSua ? "disabled" : "")>Lưu</button>
-            <a class="btn btn-secondary" href="@returnUrl">Quay lại</a>
+
+            <a class="btn btn-secondary"
+               href="@Url.Action("Index", new { status = status })">
+                Quay lại
+            </a>
 
         </form>
     </div>
 
 </div>
+
+<!-- MODAL BÀN/PHÒNG GIỮ NGUYÊN -->
+<div class="modal fade" id="banPhongModal" tabindex="-1" aria-labelledby="banPhongModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="banPhongModalLabel">Chọn bàn / phòng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs" id="banPhongTab" role="tablist">
+                </ul>
+
+                <div class="tab-content p-3 border border-top-0" id="banPhongTabContent">
+                    <div class="text-center p-5">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS + JS GIỮ NGUYÊN -->
+<style>
+    .table-grid-item {
+        min-width: 100px;
+        height: 80px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
+        padding: 5px;
+        font-size: 0.9rem;
+    }
+
+    .table-available {
+        background-color: #f8f9fa;
+        color: #212529;
+    }
+
+        .table-available:hover {
+            background-color: #e2e6ea;
+            border-color: #0d6efd;
+        }
+
+    .table-occupied {
+        background-color: #ffc107;
+        color: #333;
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    .table-current {
+        background-color: #0d6efd;
+        color: white;
+        border-color: #0a58ca;
+    }
+
+        .table-current:hover {
+            background-color: #0b5ed7;
+        }
+
+        .table-current small {
+            color: #eee;
+        }
+
+    .table-grid-item small {
+        font-size: 0.8em;
+        font-weight: normal;
+        color: #555;
+    }
+</style>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function () {
+            var myModal = new bootstrap.Modal(document.getElementById('banPhongModal'));
+            var banPhongList = [];
+            var currentSelectedID = $('#selectedBanPhongID').val();
+
+            $('#banPhongModal').on('show.bs.modal', function () {
+                loadBanPhongData();
+            });
+
+            function loadBanPhongData() {
+                var tabContainer = $('#banPhongTab');
+                var tabContent = $('#banPhongTabContent');
+                tabContent.html('<div class="text-center p-5"><div class="spinner-border"></div></div>');
+                tabContainer.empty();
+
+                $.ajax({
+                    url: '@Url.Action("GetBanPhongStatus", "Invoices")',
+                    type: 'GET',
+                    success: function (tables) {
+                        banPhongList = tables;
+                        tabContent.empty();
+
+                        var groups = [...new Map(tables.map(item =>
+                            [item.loaiBanPhong.loaiBanPhongID, item.loaiBanPhong]
+                        )).values()];
+
+                        groups.sort((a, b) => a.loaiBanPhongID - b.loaiBanPhongID);
+
+                        groups.forEach(function (group, index) {
+                            var isActive = index === 0;
+
+                            var tab =
+                                `<li class="nav-item">
+                                    <button class="nav-link ${isActive ? 'active' : ''}"
+                                            data-bs-target="#tab-pane-${group.loaiBanPhongID}"
+                                            data-bs-toggle="tab">${group.tenLoai}</button>
+                                </li>`;
+                            tabContainer.append(tab);
+
+                            var pane =
+                                `<div class="tab-pane fade ${isActive ? 'show active' : ''}"
+                                      id="tab-pane-${group.loaiBanPhongID}">
+                                 </div>`;
+                            tabContent.append(pane);
+
+                            var list = tables.filter(t => t.loaiBanPhongID === group.loaiBanPhongID);
+                            renderGroup(list, `#tab-pane-${group.loaiBanPhongID}`);
+                        });
+
+                    },
+                    error: function () {
+                        tabContent.html('<div class="alert alert-danger">Không thể tải danh sách bàn.</div>');
+                    }
+                });
+            }
+
+            function renderGroup(tables, container) {
+                var wrap = $('<div class="d-flex flex-wrap gap-2"></div>');
+                currentSelectedID = $('#selectedBanPhongID').val();
+
+                tables.forEach(function (ban) {
+                    var isOccupied = ban.trangThai.toLowerCase() !== 'trống';
+                    var isCurrent = ban.banPhongID == currentSelectedID;
+
+                    var css = isCurrent ? "table-current" : (isOccupied ? "table-occupied" : "table-available");
+
+                    wrap.append(`
+                        <div class="table-grid-item ${css}"
+                             data-id="${ban.banPhongID}"
+                             data-name="${ban.tenBanPhong}"
+                             data-occupied="${isOccupied}">
+                            <span>${ban.tenBanPhong}</span>
+                            <small>Sức chứa: ${ban.sucChua}</small>
+                        </div>
+                    `);
+                });
+
+                $(container).html(wrap);
+            }
+
+            $('#banPhongTabContent').on('click', '.table-grid-item:not(.table-occupied)', function () {
+                $('#selectedBanPhongID').val($(this).data('id'));
+                $('#selectedBanPhongName').val($(this).data('name'));
+                myModal.hide();
+            });
+        });
+    </script>
+}

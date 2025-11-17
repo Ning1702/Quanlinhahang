@@ -35,8 +35,9 @@ namespace Quanlinhahang.Controllers
             // Tổng doanh thu (chỉ tính đã thanh toán)
             // ===== ĐÃ SỬA =====
             var doanhThu = _context.HoaDons
-                .Where(h => h.TrangThai == "Đã thanh toán" && h.TaiKhoanID == currentNhanVienId)
+                .Where(h => h.TrangThaiID == 4 && h.TaiKhoanID == currentNhanVienId)
                 .Sum(h => (decimal?)h.TongTien) ?? 0;
+
 
             // Hoa hồng: 5% doanh thu
             var hoaHong = doanhThu * 0.05m;
@@ -44,12 +45,12 @@ namespace Quanlinhahang.Controllers
             // Hóa đơn đã thanh toán
             // ===== ĐÃ SỬA =====
             var daTT = _context.HoaDons
-                .Count(h => h.TrangThai == "Đã thanh toán" && h.TaiKhoanID == currentNhanVienId);
+                .Count(h => h.TrangThaiID == 4 && h.TaiKhoanID == currentNhanVienId);
 
             // Hóa đơn chưa thanh toán
             // ===== ĐÃ SỬA =====
             var chuaTT = _context.HoaDons
-                .Count(h => h.TrangThai != "Đã thanh toán" && h.TaiKhoanID == currentNhanVienId);
+                .Count(h => h.TrangThaiID != 4 && h.TaiKhoanID == currentNhanVienId);
 
             var vm = new ReportVM
             {

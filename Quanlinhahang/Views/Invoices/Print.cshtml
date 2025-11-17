@@ -30,7 +30,7 @@
     <table class="table table-sm">
         <thead><tr><th>Món</th><th class="text-end">SL</th><th class="text-end">Đơn giá</th><th class="text-end">Thành tiền</th></tr></thead>
         <tbody>
-            @foreach (var i in Model.ChiTiet)
+            @foreach (var i in Model.ChiTietHoaDons)
             {
                 <tr>
                     <td>@i.MonAn?.TenMon</td>
