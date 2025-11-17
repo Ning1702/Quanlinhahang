@@ -73,9 +73,13 @@ namespace Quanlinhahang.Controllers
                 SoDienThoai = x.HoaDon.DatBan.KhachHang.SoDienThoai,
 
                 // Xử lý trường hợp BanPhongID là NULL
-                BanPhong = x.HoaDon.BanPhong != null ? x.HoaDon.BanPhong.TenBanPhong : "Không yêu cầu",
+                BanPhong = x.HoaDon.BanPhong != null
+            ? x.HoaDon.BanPhong.TenBanPhong
+            : null,
+
                 LoaiBanPhong = (x.HoaDon.BanPhong != null && x.HoaDon.BanPhong.LoaiBanPhong != null)
-                               ? x.HoaDon.BanPhong.LoaiBanPhong.TenLoai : "",
+                ? x.HoaDon.BanPhong.LoaiBanPhong.TenLoai
+                : null,
 
                 // TÍNH TOÁN THÀNH TIỀN CUỐI CÙNG (Giống trang Edit)
                 ThanhTien = (x.SubTotal * (1 + (x.HoaDon.VAT ?? 0.10m)))
@@ -223,8 +227,9 @@ namespace Quanlinhahang.Controllers
         // ==============================
         // EDIT
         // ==============================
-        public async Task<IActionResult> Edit(int id)
+        public async Task<IActionResult> Edit(int id, int status = 0)
         {
+            ViewBag.Status = status;
             ViewBag.ReturnUrl = Request.Headers["Referer"].ToString();
 
             var hd = await _db.HoaDons
@@ -284,7 +289,7 @@ namespace Quanlinhahang.Controllers
         // ==============================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Save(InvoiceEditVM vm, string returnUrl)
+        public async Task<IActionResult> Save(InvoiceEditVM vm, int status)
         {
             var hd = await _db.HoaDons
                 .Include(h => h.DatBan)
@@ -294,8 +299,6 @@ namespace Quanlinhahang.Controllers
             if (hd == null) return NotFound();
 
             hd.BanPhongID = vm.BanPhongID;
-
-
             hd.GiamGia = vm.GiamGia;
             hd.DiemSuDung = vm.DiemSuDung;
             hd.HinhThucThanhToan = vm.HinhThucThanhToan;
@@ -305,8 +308,9 @@ namespace Quanlinhahang.Controllers
 
             TempData["msg"] = "Đã lưu hóa đơn.";
 
-            return RedirectToAction(nameof(Edit), new { id = vm.HoaDonID });
+            return RedirectToAction(nameof(Edit), new { id = vm.HoaDonID, status = status });
         }
+
 
         // ==============================
         // ADD ITEM

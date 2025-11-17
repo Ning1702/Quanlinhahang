@@ -233,9 +233,10 @@ else if (daXacNhan)
             <button class="btn btn-success" @(khongTheSua ? "disabled" : "")>Lưu</button>
 
             <a class="btn btn-secondary"
-               href="@Url.Action("Index", new { status = status })">
+               href="@Url.Action("Index", new { status = ViewBag.Status })">
                 Quay lại
             </a>
+
 
         </form>
     </div>

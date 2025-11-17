@@ -155,7 +155,12 @@
                                 @Html.AntiForgeryToken()
                                 <button class="btn btn-sm btn-primary me-1">Phục vụ</button>
                             </form>
-                            <a asp-action="Edit" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-warning me-1">Chi tiết</a>
+                            <a asp-action="Edit"
+                               asp-route-id="@x.HoaDonID"
+                               asp-route-status="@currentStatus"
+                               class="btn btn-sm btn-warning me-1">
+                                Chi tiết
+                            </a>
                             <form class="d-inline" method="post" asp-action="HuyHoaDon" asp-route-id="@x.HoaDonID">
                                 @Html.AntiForgeryToken()
                                 <button class="btn btn-sm btn-danger">Hủy</button>
@@ -167,7 +172,12 @@
                                 @Html.AntiForgeryToken()
                                 <button class="btn btn-sm btn-success me-1">Thanh toán</button>
                             </form>
-                            <a asp-action="Edit" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-warning me-1">Chi tiết</a>
+                            <a asp-action="Edit"
+                               asp-route-id="@x.HoaDonID"
+                               asp-route-status="@currentStatus"
+                               class="btn btn-sm btn-warning me-1">
+                                Chi tiết
+                            </a>
                             <form class="d-inline" method="post" asp-action="HuyHoaDon" asp-route-id="@x.HoaDonID">
                                 @Html.AntiForgeryToken()
                                 <button class="btn btn-sm btn-danger">Hủy</button>
@@ -183,7 +193,12 @@
                         }
                         else
                         {
-                            <a asp-action="Edit" asp-route-id="@x.HoaDonID" class="btn btn-sm btn-warning me-1">Chi tiết</a>
+                            <a asp-action="Edit"
+                               asp-route-id="@x.HoaDonID"
+                               asp-route-status="@currentStatus"
+                               class="btn btn-sm btn-warning me-1">
+                                Chi tiết
+                            </a>
                             <form class="d-inline" method="post" asp-action="ConfirmInvoice" asp-route-id="@x.HoaDonID">
                                 @Html.AntiForgeryToken()
                                 <button class="btn btn-sm btn-success me-1">Xác nhận</button>
